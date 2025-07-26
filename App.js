@@ -18,16 +18,21 @@ export default function App() {
     async function prepare() {
       try {
         // Initialize database
+        console.log('Initializing database...');
         await DatabaseService.init();
+        console.log('Database initialized successfully');
         
         // Load fonts
+        console.log('Loading fonts...');
         await Font.loadAsync({
           'Poppins-Regular': require('./assets/fonts/Poppins-Regular.ttf'),
           'Poppins-Bold': require('./assets/fonts/Poppins-Bold.ttf'),
           'Poppins-SemiBold': require('./assets/fonts/Poppins-SemiBold.ttf'),
         });
+        console.log('Fonts loaded successfully');
       } catch (e) {
-        console.warn(e);
+        console.error('App initialization error:', e);
+        // Still set ready to true so the app can load even if database fails
       } finally {
         setIsReady(true);
       }

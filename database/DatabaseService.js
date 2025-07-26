@@ -1,17 +1,28 @@
 import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 
 class DatabaseServiceImp {
   constructor() {
     this.db = null;
+    this.isWeb = Platform.OS === 'web';
   }
 
   async init() {
     try {
+      if (this.isWeb) {
+        console.log('Running on web, SQLite not available. Using mock data.');
+        return;
+      }
+      
+      console.log('Opening database...');
       this.db = await SQLite.openDatabaseAsync('workoutLogger.db');
+      console.log('Database opened successfully');
+      
       await this.createTables();
       await this.seedExercises();
     } catch (error) {
       console.error('Database initialization error:', error);
+      throw error;
     }
   }
 
@@ -164,8 +175,46 @@ class DatabaseServiceImp {
     }
   }
 
+  // Mock data for web
+  getMockWorkouts() {
+    return [
+      {
+        id: 1,
+        name: 'Push Day',
+        date: '2024-01-15',
+        start_time: '09:00',
+        end_time: '10:30',
+        duration: 90,
+        notes: 'Great workout!'
+      },
+      {
+        id: 2,
+        name: 'Pull Day',
+        date: '2024-01-13',
+        start_time: '08:00',
+        end_time: '09:15',
+        duration: 75,
+        notes: 'Focused on form'
+      }
+    ];
+  }
+
+  getMockExercises() {
+    return [
+      { id: 1, name: 'Push-ups', category_name: 'Chest', category_color: '#FF6B6B', muscle_groups: 'Chest, Triceps, Shoulders', equipment: 'Bodyweight' },
+      { id: 2, name: 'Bench Press', category_name: 'Chest', category_color: '#FF6B6B', muscle_groups: 'Chest, Triceps, Shoulders', equipment: 'Barbell' },
+      { id: 3, name: 'Pull-ups', category_name: 'Back', category_color: '#4ECDC4', muscle_groups: 'Lats, Biceps, Rhomboids', equipment: 'Pull-up Bar' },
+      { id: 4, name: 'Squats', category_name: 'Legs', category_color: '#45B7D1', muscle_groups: 'Quadriceps, Glutes', equipment: 'Barbell' }
+    ];
+  }
+
   // Workout methods
   async createWorkout(workout) {
+    if (this.isWeb) {
+      console.log('Mock: Creating workout', workout);
+      return Date.now(); // Mock ID
+    }
+    
     const result = await this.db.runAsync(
       'INSERT INTO workouts (name, date, start_time, end_time, duration, notes) VALUES (?, ?, ?, ?, ?, ?)',
       [workout.name, workout.date, workout.startTime, workout.endTime, workout.duration, workout.notes]
@@ -174,6 +223,11 @@ class DatabaseServiceImp {
   }
 
   async addExerciseToWorkout(workoutId, exercise) {
+    if (this.isWeb) {
+      console.log('Mock: Adding exercise to workout', workoutId, exercise);
+      return;
+    }
+    
     return await this.db.runAsync(
       'INSERT INTO workout_exercises (workout_id, exercise_id, sets, reps, weight, distance, duration, rest_time, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [workoutId, exercise.exerciseId, exercise.sets, exercise.reps, exercise.weight, exercise.distance, exercise.duration, exercise.restTime, exercise.notes]
@@ -181,6 +235,10 @@ class DatabaseServiceImp {
   }
 
   async getWorkouts(limit = 10) {
+    if (this.isWeb) {
+      return this.getMockWorkouts().slice(0, limit);
+    }
+    
     return await this.db.getAllAsync(
       'SELECT * FROM workouts ORDER BY date DESC, created_at DESC LIMIT ?',
       [limit]
@@ -188,6 +246,14 @@ class DatabaseServiceImp {
   }
 
   async getWorkoutById(id) {
+    if (this.isWeb) {
+      const workout = this.getMockWorkouts().find(w => w.id == id);
+      if (workout) {
+        workout.exercises = [];
+      }
+      return workout;
+    }
+    
     const workout = await this.db.getFirstAsync('SELECT * FROM workouts WHERE id = ?', [id]);
     if (workout) {
       const exercises = await this.db.getAllAsync(`
@@ -203,6 +269,10 @@ class DatabaseServiceImp {
   }
 
   async getExercises() {
+    if (this.isWeb) {
+      return this.getMockExercises();
+    }
+    
     return await this.db.getAllAsync(`
       SELECT e.*, ec.name as category_name, ec.color as category_color
       FROM exercises e
@@ -212,10 +282,26 @@ class DatabaseServiceImp {
   }
 
   async getExerciseCategories() {
+    if (this.isWeb) {
+      return [
+        { id: 1, name: 'Chest', icon: 'fitness', color: '#FF6B6B' },
+        { id: 2, name: 'Back', icon: 'body', color: '#4ECDC4' },
+        { id: 3, name: 'Legs', icon: 'walk', color: '#45B7D1' },
+        { id: 4, name: 'Shoulders', icon: 'fitness', color: '#96CEB4' }
+      ];
+    }
+    
     return await this.db.getAllAsync('SELECT * FROM exercise_categories ORDER BY name');
   }
 
   async getWorkoutStats() {
+    if (this.isWeb) {
+      return {
+        totalWorkouts: 2,
+        weeklyWorkouts: 1,
+      };
+    }
+    
     const totalWorkouts = await this.db.getFirstAsync('SELECT COUNT(*) as count FROM workouts');
     const thisWeek = new Date();
     thisWeek.setDate(thisWeek.getDate() - 7);
@@ -231,6 +317,10 @@ class DatabaseServiceImp {
   }
 
   async getWorkoutsByDateRange(startDate, endDate) {
+    if (this.isWeb) {
+      return this.getMockWorkouts().filter(w => w.date >= startDate && w.date <= endDate);
+    }
+    
     return await this.db.getAllAsync(
       'SELECT * FROM workouts WHERE date BETWEEN ? AND ? ORDER BY date',
       [startDate, endDate]

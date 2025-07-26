@@ -43,6 +43,11 @@ export const lightTheme = {
     text: colors.text,
     border: colors.cardBorder,
     notification: colors.primary,
+    // react-native-paper specific colors
+    onSurface: colors.text,
+    surface: colors.surface,
+    surfaceVariant: colors.background,
+    onSurfaceVariant: colors.textSecondary,
   },
   roundness: 12,
   elevation: {
@@ -66,6 +71,11 @@ export const darkTheme = {
     text: darkColors.text,
     border: darkColors.cardBorder,
     notification: darkColors.primary,
+    // react-native-paper specific colors
+    onSurface: darkColors.text,
+    surface: darkColors.surface,
+    surfaceVariant: darkColors.background,
+    onSurfaceVariant: darkColors.textSecondary,
   },
   roundness: 12,
   elevation: {

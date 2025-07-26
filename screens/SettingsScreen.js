@@ -16,10 +16,9 @@ import {
   Dialog,
   Portal,
   TextInput,
-  PaperProvider,
 } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { spacing, typography, lightTheme } from '../constants/theme';
+import { spacing, typography, lightTheme, darkTheme } from '../constants/theme';
 
 export default function SettingsScreen({ navigation }) {
   const [darkMode, setDarkMode] = useState(false);
@@ -196,8 +195,7 @@ export default function SettingsScreen({ navigation }) {
   ];
 
   return (
-    <PaperProvider theme={lightTheme}>
-      <View style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -369,8 +367,7 @@ export default function SettingsScreen({ navigation }) {
           </Dialog.Actions>
         </Dialog>
       </Portal>
-      </View>
-    </PaperProvider>
+    </View>
   );
 }
 
