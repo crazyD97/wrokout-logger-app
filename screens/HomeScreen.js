@@ -12,6 +12,7 @@ import { Card, Button, Chip, useTheme } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
+import eventBus from '../utils/EventBus';
 
 const { width } = Dimensions.get('window');
 
@@ -26,6 +27,8 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     loadData();
+    const unsub = eventBus.on('workout:added', loadData);
+    return () => unsub();
   }, []);
 
   const loadData = async () => {
@@ -272,6 +275,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h4,
+    paddingBottom: spacing.sm
   },
   seeAllText: {
     ...typography.body2,

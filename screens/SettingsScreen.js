@@ -21,6 +21,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { spacing, typography } from '../constants/theme';
 import { useSettings } from '../contexts/SettingsContext';
+import { DatabaseService } from '../database/DatabaseService';
 
 export default function SettingsScreen({ navigation }) {
   const theme = useTheme();
@@ -58,7 +59,7 @@ export default function SettingsScreen({ navigation }) {
     );
   };
 
-  const handleClearData = () => {
+  const handleClearData = async () => {
     Alert.alert(
       'Clear All Data',
       'This will permanently delete all your workouts and cannot be undone. Are you sure?',
@@ -67,9 +68,14 @@ export default function SettingsScreen({ navigation }) {
         {
           text: 'Delete All',
           style: 'destructive',
-          onPress: () => {
-            // Implementation would clear database
-            Alert.alert('Success', 'All data has been cleared.');
+          onPress: async () => {
+            try {
+              await DatabaseService.clearAllData();
+              Alert.alert('Success', 'All data has been cleared.');
+              // Optionally trigger a refresh event for other screens
+            } catch (error) {
+              Alert.alert('Error', 'Failed to clear data.');
+            }
           },
         },
       ]

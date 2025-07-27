@@ -11,6 +11,7 @@ import { Card, Button, Chip, useTheme } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
+import eventBus from '../utils/EventBus';
 
 export default function CalendarScreen({ navigation }) {
   const theme = useTheme();
@@ -24,6 +25,8 @@ export default function CalendarScreen({ navigation }) {
 
   useEffect(() => {
     loadWorkoutData();
+    const unsub = eventBus.on('workout:added', loadWorkoutData);
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function CalendarScreen({ navigation }) {
         // Mark the date on calendar
         marked[date] = {
           marked: true,
-          dotColor: theme.colors.primary,
+          dotColor: theme.colors.secondary,
           customStyles: {
             container: {
               backgroundColor: workoutsByDate[date].length > 1 ? theme.colors.primary : 'transparent',
@@ -189,15 +192,23 @@ export default function CalendarScreen({ navigation }) {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Calendar</Text>
-        <View style={styles.headerStats}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{monthStats.totalWorkouts}</Text>
-            <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts</Text>
+        <View style={styles.headerStatsRow}>
+          <View style={styles.headerStats}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{monthStats.totalWorkouts}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: theme.colors.secondary }]}>{formatDuration(monthStats.totalDuration)}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Duration</Text>
+            </View>
           </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.colors.secondary }]}>{formatDuration(monthStats.totalDuration)}</Text>
-            <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Duration</Text>
-          </View>
+          <TouchableOpacity
+            style={{ marginLeft: spacing.lg, alignSelf: 'center' }}
+            onPress={() => navigation.navigate('Log Workout')}
+          >
+            <Ionicons name="add-circle" size={32} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -266,7 +277,10 @@ export default function CalendarScreen({ navigation }) {
               <Card.Content style={styles.workoutContent}>
                 <View style={styles.workoutHeader}>
                   <View style={styles.workoutInfo}>
-                    <Text style={[styles.workoutName, { color: theme.colors.onSurface }]}>{workout.name}</Text>
+                    <View style={styles.workoutIconRow}>
+                      <Ionicons name={workout.icon || 'barbell'} size={24} color={theme.colors.primary} style={{ marginRight: spacing.sm }} />
+                      <Text style={[styles.workoutName, { color: theme.colors.onSurface }]}>{workout.name}</Text>
+                    </View>
                     <Text style={[styles.workoutTime, { color: theme.colors.onSurfaceVariant }]}>
                       {workout.start_time} - {workout.end_time}
                     </Text>
@@ -313,6 +327,11 @@ const styles = StyleSheet.create({
   headerStats: {
     flexDirection: 'row',
     gap: spacing.xl,
+  },
+  headerStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   statItem: {
     alignItems: 'center',
@@ -410,5 +429,10 @@ const styles = StyleSheet.create({
   },
   emptyButtonContent: {
     paddingHorizontal: spacing.lg,
+  },
+  workoutIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
 });
