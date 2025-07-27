@@ -8,7 +8,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Card, Button, Chip } from 'react-native-paper';
+import { Card, Button, Chip, useTheme } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
@@ -16,6 +16,7 @@ import { spacing, typography } from '../constants/theme';
 const { width } = Dimensions.get('window');
 
 export default function HomeScreen({ navigation }) {
+  const theme = useTheme();
   const [stats, setStats] = useState({
     totalWorkouts: 0,
     weeklyWorkouts: 0,
@@ -58,10 +59,10 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <LinearGradient
-        colors={['#667EFF', '#4A5FE7']}
+        colors={[theme.colors.primary, theme.colors.primaryContainer]}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -79,26 +80,26 @@ export default function HomeScreen({ navigation }) {
 
       {/* Quick Stats */}
       <View style={styles.statsContainer}>
-        <Card style={styles.statCard}>
+        <Card style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
           <Card.Content style={styles.statContent}>
-            <View style={styles.statIcon}>
-              <Ionicons name="fitness" size={24} color="#667EFF" />
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.primaryContainer }]}>
+              <Ionicons name="fitness" size={24} color={theme.colors.primary} />
             </View>
             <View>
-              <Text style={styles.statNumber}>{stats.totalWorkouts}</Text>
-              <Text style={styles.statLabel}>Total Workouts</Text>
+              <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.totalWorkouts}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Total Workouts</Text>
             </View>
           </Card.Content>
         </Card>
 
-        <Card style={styles.statCard}>
+        <Card style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
           <Card.Content style={styles.statContent}>
-            <View style={styles.statIcon}>
-              <Ionicons name="calendar" size={24} color="#4CAF50" />
+            <View style={[styles.statIcon, { backgroundColor: theme.colors.secondaryContainer }]}>
+              <Ionicons name="calendar" size={24} color={theme.colors.secondary} />
             </View>
             <View>
-              <Text style={styles.statNumber}>{stats.weeklyWorkouts}</Text>
-              <Text style={styles.statLabel}>This Week</Text>
+              <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.weeklyWorkouts}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>This Week</Text>
             </View>
           </Card.Content>
         </Card>
@@ -106,14 +107,14 @@ export default function HomeScreen({ navigation }) {
 
       {/* Quick Actions */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Quick Actions</Text>
         <View style={styles.actionButtons}>
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => navigation.navigate('Log Workout')}
           >
             <LinearGradient
-              colors={['#667EFF', '#4A5FE7']}
+              colors={[theme.colors.primary, theme.colors.primaryContainer]}
               style={styles.actionButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -127,9 +128,9 @@ export default function HomeScreen({ navigation }) {
             style={styles.actionButton}
             onPress={() => navigation.navigate('Progress')}
           >
-            <View style={styles.actionButtonSecondary}>
-              <Ionicons name="analytics" size={24} color="#667EFF" />
-              <Text style={styles.actionButtonSecondaryText}>View Progress</Text>
+            <View style={[styles.actionButtonSecondary, { backgroundColor: theme.colors.primaryContainer }]}>
+              <Ionicons name="analytics" size={24} color={theme.colors.primary} />
+              <Text style={[styles.actionButtonSecondaryText, { color: theme.colors.primary }]}>View Progress</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -138,18 +139,18 @@ export default function HomeScreen({ navigation }) {
       {/* Recent Workouts */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Workouts</Text>
+          <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Recent Workouts</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Calendar')}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={[styles.seeAllText, { color: theme.colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
 
         {recentWorkouts.length === 0 ? (
-          <Card style={styles.emptyCard}>
+          <Card style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content style={styles.emptyContent}>
-              <Ionicons name="fitness-outline" size={48} color="#B0B0B0" />
-              <Text style={styles.emptyTitle}>No workouts yet</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="fitness-outline" size={48} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No workouts yet</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
                 Start your fitness journey by logging your first workout!
               </Text>
               <Button
@@ -164,12 +165,12 @@ export default function HomeScreen({ navigation }) {
           </Card>
         ) : (
           recentWorkouts.map((workout) => (
-            <Card key={workout.id} style={styles.workoutCard}>
+            <Card key={workout.id} style={[styles.workoutCard, { backgroundColor: theme.colors.surface }]}>
               <Card.Content style={styles.workoutContent}>
                 <View style={styles.workoutHeader}>
                   <View>
-                    <Text style={styles.workoutName}>{workout.name}</Text>
-                    <Text style={styles.workoutDate}>
+                    <Text style={[styles.workoutName, { color: theme.colors.onSurface }]}>{workout.name}</Text>
+                    <Text style={[styles.workoutDate, { color: theme.colors.onSurfaceVariant }]}>
                       {formatDate(workout.date)}
                     </Text>
                   </View>
@@ -177,15 +178,15 @@ export default function HomeScreen({ navigation }) {
                     <Chip
                       mode="outlined"
                       compact
-                      style={styles.durationChip}
-                      textStyle={styles.chipText}
+                      style={[styles.durationChip, { backgroundColor: theme.colors.secondaryContainer }]}
+                      textStyle={[styles.chipText, { color: theme.colors.secondary }]}
                     >
                       {formatDuration(workout.duration)}
                     </Chip>
                   </View>
                 </View>
                 {workout.notes && (
-                  <Text style={styles.workoutNotes} numberOfLines={2}>
+                  <Text style={[styles.workoutNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
                     {workout.notes}
                   </Text>
                 )}
@@ -201,7 +202,6 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     paddingTop: spacing.xxl,
@@ -248,19 +248,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F0F2FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.md,
   },
   statNumber: {
     ...typography.h2,
-    color: '#333333',
     fontWeight: 'bold',
   },
   statLabel: {
     ...typography.caption,
-    color: '#666666',
     marginTop: 2,
   },
   section: {
@@ -275,11 +272,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h4,
-    color: '#333333',
   },
   seeAllText: {
     ...typography.body2,
-    color: '#667EFF',
     fontWeight: '600',
   },
   actionButtons: {
@@ -308,13 +303,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.lg,
-    backgroundColor: '#F0F2FF',
     borderRadius: 16,
     gap: spacing.sm,
   },
   actionButtonSecondaryText: {
     ...typography.body1,
-    color: '#667EFF',
     fontWeight: '600',
   },
   workoutCard: {
@@ -332,28 +325,23 @@ const styles = StyleSheet.create({
   },
   workoutName: {
     ...typography.h4,
-    color: '#333333',
   },
   workoutDate: {
     ...typography.body2,
-    color: '#666666',
     marginTop: 2,
   },
   workoutMeta: {
     alignItems: 'flex-end',
   },
   durationChip: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
+    borderColor: 'transparent',
   },
   chipText: {
     ...typography.caption,
-    color: '#4CAF50',
     fontWeight: '600',
   },
   workoutNotes: {
     ...typography.body2,
-    color: '#666666',
     marginTop: spacing.sm,
     fontStyle: 'italic',
   },
@@ -367,12 +355,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typography.h4,
-    color: '#333333',
     marginTop: spacing.md,
   },
   emptySubtitle: {
     ...typography.body2,
-    color: '#666666',
     textAlign: 'center',
     marginTop: spacing.sm,
     marginHorizontal: spacing.lg,

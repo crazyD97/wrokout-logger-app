@@ -16,32 +16,25 @@ import {
   Dialog,
   Portal,
   TextInput,
+  useTheme,
 } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { spacing, typography, lightTheme, darkTheme } from '../constants/theme';
+import { spacing, typography } from '../constants/theme';
 import { useSettings } from '../contexts/SettingsContext';
 
 export default function SettingsScreen({ navigation }) {
-  // Fallback state in case context fails
-  const [localDarkMode, setLocalDarkMode] = useState(false);
-  const [localNotifications, setLocalNotifications] = useState(true);
-  const [localRestTimerSound, setLocalRestTimerSound] = useState(true);
-  const [localUserProfile, setLocalUserProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    weight: '175',
-    height: '5\'10"',
-  });
-
-  // Use local state only for now to prevent crashes
-  const isDarkMode = localDarkMode;
-  const notifications = localNotifications;
-  const restTimerSound = localRestTimerSound;
-  const userProfile = localUserProfile;
-  const toggleDarkMode = () => setLocalDarkMode(!localDarkMode);
-  const toggleNotifications = () => setLocalNotifications(!localNotifications);
-  const toggleRestTimerSound = () => setLocalRestTimerSound(!localRestTimerSound);
-  const updateUserProfile = setLocalUserProfile;
+  const theme = useTheme();
+  const {
+    isDarkMode,
+    notifications,
+    restTimerSound,
+    userProfile,
+    toggleDarkMode,
+    toggleNotifications,
+    toggleRestTimerSound,
+    updateUserProfile,
+    resetSettings,
+  } = useSettings();
   
   const [showAboutDialog, setShowAboutDialog] = useState(false);
   const [showBackupDialog, setShowBackupDialog] = useState(false);
@@ -172,6 +165,29 @@ export default function SettingsScreen({ navigation }) {
           danger: true,
           onPress: handleClearData,
         },
+        {
+          title: 'Reset Settings',
+          description: 'Reset all app settings to default',
+          icon: 'refresh',
+          danger: true,
+          onPress: () => {
+            Alert.alert(
+              'Reset Settings',
+              'This will reset all app settings to their default values. Are you sure?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Reset',
+                  style: 'destructive',
+                  onPress: () => {
+                    resetSettings();
+                    Alert.alert('Success', 'Settings have been reset to default values.');
+                  },
+                },
+              ]
+            );
+          },
+        },
       ],
     },
     {
@@ -210,29 +226,29 @@ export default function SettingsScreen({ navigation }) {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#333333" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Settings</Text>
+          <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Settings</Text>
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Profile Summary */}
-        <Card style={styles.profileCard}>
+        <Card style={[styles.profileCard, { backgroundColor: theme.colors.surface }]}>
           <Card.Content>
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
-                <Ionicons name="person-circle" size={64} color="#667EFF" />
+                <Ionicons name="person-circle" size={64} color={theme.colors.primary} />
               </View>
               <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{userProfile.name}</Text>
-                <Text style={styles.profileEmail}>{userProfile.email}</Text>
-                <Text style={styles.profileStats}>
+                <Text style={[styles.profileName, { color: theme.colors.onSurface }]}>{userProfile.name}</Text>
+                <Text style={[styles.profileEmail, { color: theme.colors.onSurfaceVariant }]}>{userProfile.email}</Text>
+                <Text style={[styles.profileStats, { color: theme.colors.onSurfaceVariant }]}>
                   {userProfile.height} • {userProfile.weight} lbs
                 </Text>
               </View>
@@ -243,7 +259,7 @@ export default function SettingsScreen({ navigation }) {
                   setShowProfileDialog(true);
                 }}
               >
-                <Ionicons name="pencil" size={20} color="#667EFF" />
+                <Ionicons name="pencil" size={20} color={theme.colors.primary} />
               </TouchableOpacity>
             </View>
           </Card.Content>
@@ -251,20 +267,20 @@ export default function SettingsScreen({ navigation }) {
 
         {/* Settings Sections */}
         {settingSections.map((section, sectionIndex) => (
-          <Card key={sectionIndex} style={styles.sectionCard}>
+          <Card key={sectionIndex} style={[styles.sectionCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content>
-              <Text style={styles.sectionTitle}>{section.title}</Text>
+              <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>{section.title}</Text>
               {section.items.map((item, itemIndex) => (
                 <View key={itemIndex}>
                   <List.Item
                     title={item.title}
                     description={item.description}
                     left={(props) => (
-                      <View style={styles.listIcon}>
+                      <View style={[styles.listIcon, { backgroundColor: theme.colors.primaryContainer }]}>
                         <Ionicons
                           name={item.icon}
                           size={24}
-                          color={item.danger ? '#F44336' : '#667EFF'}
+                          color={item.danger ? theme.colors.error : theme.colors.primary}
                         />
                       </View>
                     )}
@@ -274,8 +290,11 @@ export default function SettingsScreen({ navigation }) {
                           <Switch
                             value={item.value}
                             onValueChange={item.onValueChange}
-                            thumbColor={item.value ? '#667EFF' : '#f4f3f4'}
-                            trackColor={{ false: '#767577', true: '#667EFF80' }}
+                            thumbColor={item.value ? theme.colors.primary : theme.colors.outline}
+                            trackColor={{ 
+                              false: theme.colors.outline, 
+                              true: theme.colors.primaryContainer 
+                            }}
                           />
                         );
                       }
@@ -283,7 +302,7 @@ export default function SettingsScreen({ navigation }) {
                         <Ionicons
                           name="chevron-forward"
                           size={20}
-                          color="#CCCCCC"
+                          color={theme.colors.onSurfaceVariant}
                         />
                       );
                     }}
@@ -294,9 +313,10 @@ export default function SettingsScreen({ navigation }) {
                     ]}
                     titleStyle={[
                       styles.listItemTitle,
-                      item.danger && styles.dangerText,
+                      { color: theme.colors.onSurface },
+                      item.danger && { color: theme.colors.error },
                     ]}
-                    descriptionStyle={styles.listItemDescription}
+                    descriptionStyle={[styles.listItemDescription, { color: theme.colors.onSurfaceVariant }]}
                   />
                   {itemIndex < section.items.length - 1 && (
                     <Divider style={styles.divider} />
@@ -309,8 +329,8 @@ export default function SettingsScreen({ navigation }) {
 
         {/* App Info */}
         <View style={styles.appInfo}>
-          <Text style={styles.appInfoText}>Workout Logger v1.0.0</Text>
-          <Text style={styles.appInfoText}>Made with ❤️ for fitness enthusiasts</Text>
+          <Text style={[styles.appInfoText, { color: theme.colors.onSurfaceVariant }]}>Workout Logger v1.0.0</Text>
+          <Text style={[styles.appInfoText, { color: theme.colors.onSurfaceVariant }]}>Made with ❤️ for fitness enthusiasts</Text>
         </View>
       </ScrollView>
 
@@ -322,16 +342,16 @@ export default function SettingsScreen({ navigation }) {
         >
           <Dialog.Title>About Workout Logger</Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogText}>
+            <Text style={[styles.dialogText, { color: theme.colors.onSurface }]}>
               Workout Logger is a comprehensive fitness tracking app designed to help you
               achieve your fitness goals.
             </Text>
-            <Text style={[styles.dialogText, { marginTop: spacing.md }]}>
+            <Text style={[styles.dialogText, { marginTop: spacing.md, color: theme.colors.onSurface }]}>
               Version: 1.0.0{'\n'}
               Build: 1001{'\n'}
               Release Date: 2024
             </Text>
-            <Text style={[styles.dialogText, { marginTop: spacing.md }]}>
+            <Text style={[styles.dialogText, { marginTop: spacing.md, color: theme.colors.onSurface }]}>
               Features:{'\n'}
               • Workout tracking{'\n'}
               • Progress analytics{'\n'}
@@ -354,10 +374,10 @@ export default function SettingsScreen({ navigation }) {
         >
           <Dialog.Title>Backup & Sync</Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogText}>
+            <Text style={[styles.dialogText, { color: theme.colors.onSurface }]}>
               Keep your workout data safe and synchronized across all your devices.
             </Text>
-            <Text style={[styles.dialogText, { marginTop: spacing.md }]}>
+            <Text style={[styles.dialogText, { marginTop: spacing.md, color: theme.colors.onSurface }]}>
               Current status: Local storage only
             </Text>
             <View style={styles.backupOptions}>
@@ -442,7 +462,6 @@ export default function SettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -451,7 +470,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
-    backgroundColor: '#FFFFFF',
     elevation: 2,
   },
   headerLeft: {
@@ -461,7 +479,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h4,
-    color: '#333333',
   },
   content: {
     flex: 1,
@@ -484,16 +501,13 @@ const styles = StyleSheet.create({
   },
   profileName: {
     ...typography.h4,
-    color: '#333333',
   },
   profileEmail: {
     ...typography.body2,
-    color: '#666666',
     marginTop: 2,
   },
   profileStats: {
     ...typography.caption,
-    color: '#999999',
     marginTop: 4,
   },
   editButton: {
@@ -506,14 +520,12 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h4,
-    color: '#333333',
     marginBottom: spacing.sm,
   },
   listIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F2FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: spacing.sm,
@@ -524,18 +536,13 @@ const styles = StyleSheet.create({
   },
   listItemTitle: {
     ...typography.body1,
-    color: '#333333',
     fontWeight: '600',
   },
   listItemDescription: {
     ...typography.body2,
-    color: '#666666',
   },
   dangerItem: {
     // Additional styling for dangerous actions
-  },
-  dangerText: {
-    color: '#F44336',
   },
   divider: {
     marginVertical: spacing.xs,
@@ -548,13 +555,11 @@ const styles = StyleSheet.create({
   },
   appInfoText: {
     ...typography.caption,
-    color: '#999999',
     textAlign: 'center',
     marginBottom: 4,
   },
   dialogText: {
     ...typography.body2,
-    color: '#333333',
     lineHeight: 20,
   },
   backupOptions: {

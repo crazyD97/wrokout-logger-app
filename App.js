@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { View, ActivityIndicator } from 'react-native';
 import * as Font from 'expo-font';
 
 import AppNavigator from './navigation/AppNavigator';
@@ -13,7 +14,7 @@ import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 
 function AppContent() {
   const [isReady, setIsReady] = useState(false);
-  const { isDarkMode } = useSettings();
+  const { isDarkMode, isInitialized } = useSettings();
 
   useEffect(() => {
     async function prepare() {
@@ -42,8 +43,21 @@ function AppContent() {
     prepare();
   }, []);
 
-  if (!isReady) {
-    return null;
+  // Show loading screen until both app is ready and settings are initialized
+  if (!isReady || !isInitialized) {
+    return (
+      <View style={{ 
+        flex: 1, 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        backgroundColor: isDarkMode ? darkTheme.colors.background : lightTheme.colors.background 
+      }}>
+        <ActivityIndicator 
+          size="large" 
+          color={isDarkMode ? darkTheme.colors.primary : lightTheme.colors.primary} 
+        />
+      </View>
+    );
   }
 
   const paperTheme = isDarkMode ? darkTheme : lightTheme;

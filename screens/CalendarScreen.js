@@ -7,12 +7,13 @@ import {
   ScrollView,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { Card, Button, Chip } from 'react-native-paper';
+import { Card, Button, Chip, useTheme } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
 
 export default function CalendarScreen({ navigation }) {
+  const theme = useTheme();
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split('T')[0]
   );
@@ -55,14 +56,14 @@ export default function CalendarScreen({ navigation }) {
         // Mark the date on calendar
         marked[date] = {
           marked: true,
-          dotColor: '#667EFF',
+          dotColor: theme.colors.primary,
           customStyles: {
             container: {
-              backgroundColor: workoutsByDate[date].length > 1 ? '#667EFF' : 'transparent',
+              backgroundColor: workoutsByDate[date].length > 1 ? theme.colors.primary : 'transparent',
               borderRadius: 15,
             },
             text: {
-              color: workoutsByDate[date].length > 1 ? '#FFFFFF' : '#333333',
+              color: workoutsByDate[date].length > 1 ? '#FFFFFF' : theme.colors.onSurface,
               fontWeight: 'bold',
             },
           },
@@ -73,7 +74,7 @@ export default function CalendarScreen({ navigation }) {
       marked[selectedDate] = {
         ...marked[selectedDate],
         selected: true,
-        selectedColor: '#667EFF',
+        selectedColor: theme.colors.primary,
         selectedTextColor: '#FFFFFF',
       };
 
@@ -106,12 +107,20 @@ export default function CalendarScreen({ navigation }) {
     });
 
     // Add new selection
-    updatedMarked[selectedDate] = {
-      ...updatedMarked[selectedDate],
-      selected: true,
-      selectedColor: '#667EFF',
-      selectedTextColor: '#FFFFFF',
-    };
+    if (updatedMarked[selectedDate]) {
+      updatedMarked[selectedDate] = {
+        ...updatedMarked[selectedDate],
+        selected: true,
+        selectedColor: theme.colors.primary,
+        selectedTextColor: '#FFFFFF',
+      };
+    } else {
+      updatedMarked[selectedDate] = {
+        selected: true,
+        selectedColor: theme.colors.primary,
+        selectedTextColor: '#FFFFFF',
+      };
+    }
 
     setMarkedDates(updatedMarked);
   };
@@ -138,213 +147,149 @@ export default function CalendarScreen({ navigation }) {
   };
 
   const getWorkoutTypeColor = (workoutName) => {
-    const name = workoutName.toLowerCase();
-    if (name.includes('push') || name.includes('chest')) return '#FF6B6B';
-    if (name.includes('pull') || name.includes('back')) return '#4ECDC4';
-    if (name.includes('leg') || name.includes('squat')) return '#45B7D1';
-    if (name.includes('cardio') || name.includes('run')) return '#54A0FF';
-    if (name.includes('core') || name.includes('abs')) return '#FF9FF3';
-    return '#FECA57';
+    const colors = {
+      'Push': theme.colors.primary,
+      'Pull': theme.colors.secondary,
+      'Legs': '#4CAF50',
+      'Cardio': '#FF9800',
+      'Core': '#9C27B0',
+    };
+
+    for (const [type, color] of Object.entries(colors)) {
+      if (workoutName.includes(type)) {
+        return color;
+      }
+    }
+    return theme.colors.primary;
   };
 
   const getMonthStats = () => {
     const currentMonth = new Date().getMonth();
     const currentYear = new Date().getFullYear();
-    
-    let monthlyWorkouts = 0;
+    let totalWorkouts = 0;
     let totalDuration = 0;
-    
-    Object.entries(workoutData).forEach(([date, workouts]) => {
+
+    Object.keys(workoutData).forEach(date => {
       const workoutDate = new Date(date);
       if (workoutDate.getMonth() === currentMonth && workoutDate.getFullYear() === currentYear) {
-        monthlyWorkouts += workouts.length;
-        totalDuration += workouts.reduce((sum, w) => sum + (w.duration || 0), 0);
+        workoutData[date].forEach(workout => {
+          totalWorkouts++;
+          totalDuration += workout.duration || 0;
+        });
       }
     });
 
-    return {
-      workouts: monthlyWorkouts,
-      duration: totalDuration,
-      average: monthlyWorkouts > 0 ? Math.round(totalDuration / monthlyWorkouts) : 0,
-    };
+    return { totalWorkouts, totalDuration };
   };
 
   const monthStats = getMonthStats();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#333333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Workout Calendar</Text>
+      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Calendar</Text>
+        <View style={styles.headerStats}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{monthStats.totalWorkouts}</Text>
+            <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={[styles.statNumber, { color: theme.colors.secondary }]}>{formatDuration(monthStats.totalDuration)}</Text>
+            <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Duration</Text>
+          </View>
         </View>
-        <TouchableOpacity onPress={() => navigation.navigate('Log Workout')}>
-          <Ionicons name="add" size={24} color="#333333" />
-        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Monthly Stats */}
-        <Card style={styles.statsCard}>
-          <Card.Content>
-            <Text style={styles.statsTitle}>This Month</Text>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{monthStats.workouts}</Text>
-                <Text style={styles.statLabel}>Workouts</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{formatDuration(monthStats.duration)}</Text>
-                <Text style={styles.statLabel}>Total Time</Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{formatDuration(monthStats.average)}</Text>
-                <Text style={styles.statLabel}>Avg Duration</Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
+      {/* Calendar */}
+      <View style={[styles.calendarContainer, { backgroundColor: theme.colors.surface }]}>
+        <Calendar
+          onDayPress={onDayPress}
+          markedDates={markedDates}
+          theme={{
+            backgroundColor: theme.colors.surface,
+            calendarBackground: theme.colors.surface,
+            textSectionTitleColor: theme.colors.onSurface,
+            selectedDayBackgroundColor: theme.colors.primary,
+            selectedDayTextColor: '#FFFFFF',
+            todayTextColor: theme.colors.primary,
+            dayTextColor: theme.colors.onSurface,
+            textDisabledColor: theme.colors.onSurfaceDisabled,
+            dotColor: theme.colors.primary,
+            selectedDotColor: '#FFFFFF',
+            arrowColor: theme.colors.primary,
+            monthTextColor: theme.colors.onSurface,
+            indicatorColor: theme.colors.primary,
+            textDayFontWeight: '300',
+            textMonthFontWeight: 'bold',
+            textDayHeaderFontWeight: '500',
+            textDayFontSize: 16,
+            textMonthFontSize: 18,
+            textDayHeaderFontSize: 14,
+          }}
+        />
+      </View>
 
-        {/* Calendar */}
-        <Card style={styles.calendarCard}>
-          <Card.Content>
-            <Calendar
-              current={selectedDate}
-              onDayPress={onDayPress}
-              markedDates={markedDates}
-              markingType="custom"
-              theme={{
-                backgroundColor: '#FFFFFF',
-                calendarBackground: '#FFFFFF',
-                textSectionTitleColor: '#667EFF',
-                selectedDayBackgroundColor: '#667EFF',
-                selectedDayTextColor: '#FFFFFF',
-                todayTextColor: '#667EFF',
-                dayTextColor: '#333333',
-                textDisabledColor: '#CCCCCC',
-                dotColor: '#667EFF',
-                selectedDotColor: '#FFFFFF',
-                arrowColor: '#667EFF',
-                disabledArrowColor: '#CCCCCC',
-                monthTextColor: '#333333',
-                indicatorColor: '#667EFF',
-                textDayFontFamily: 'Poppins-Regular',
-                textMonthFontFamily: 'Poppins-SemiBold',
-                textDayHeaderFontFamily: 'Poppins-Regular',
-                textDayFontSize: 16,
-                textMonthFontSize: 18,
-                textDayHeaderFontSize: 14,
-              }}
-            />
-          </Card.Content>
-        </Card>
+      {/* Selected Date Workouts */}
+      <ScrollView style={styles.workoutsContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.workoutsHeader}>
+          <Text style={[styles.workoutsTitle, { color: theme.colors.onSurface }]}>
+            {formatDate(selectedDate)}
+          </Text>
+          <Text style={[styles.workoutsSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+            {selectedWorkouts.length} workout{selectedWorkouts.length !== 1 ? 's' : ''}
+          </Text>
+        </View>
 
-        {/* Selected Date Info */}
-        <View style={styles.selectedDateSection}>
-          <Text style={styles.selectedDateTitle}>{formatDate(selectedDate)}</Text>
-          
-          {selectedWorkouts.length === 0 ? (
-            <Card style={styles.emptyCard}>
-              <Card.Content style={styles.emptyContent}>
-                <Ionicons name="calendar-outline" size={48} color="#B0B0B0" />
-                <Text style={styles.emptyTitle}>No workouts on this day</Text>
-                <Text style={styles.emptySubtitle}>
-                  Why not add one to keep your streak going?
-                </Text>
-                <Button
-                  mode="contained"
-                  onPress={() => navigation.navigate('Log Workout')}
-                  style={styles.emptyButton}
-                  contentStyle={styles.emptyButtonContent}
-                >
-                  Log Workout
-                </Button>
+        {selectedWorkouts.length === 0 ? (
+          <Card style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}>
+            <Card.Content style={styles.emptyContent}>
+              <Ionicons name="calendar-outline" size={48} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No workouts</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                No workouts scheduled for this date
+              </Text>
+              <Button
+                mode="contained"
+                onPress={() => navigation.navigate('Log Workout')}
+                style={styles.emptyButton}
+                contentStyle={styles.emptyButtonContent}
+              >
+                Log Workout
+              </Button>
+            </Card.Content>
+          </Card>
+        ) : (
+          selectedWorkouts.map((workout, index) => (
+            <Card key={workout.id} style={[styles.workoutCard, { backgroundColor: theme.colors.surface }]}>
+              <Card.Content style={styles.workoutContent}>
+                <View style={styles.workoutHeader}>
+                  <View style={styles.workoutInfo}>
+                    <Text style={[styles.workoutName, { color: theme.colors.onSurface }]}>{workout.name}</Text>
+                    <Text style={[styles.workoutTime, { color: theme.colors.onSurfaceVariant }]}>
+                      {workout.start_time} - {workout.end_time}
+                    </Text>
+                  </View>
+                  <View style={styles.workoutMeta}>
+                    <Chip
+                      mode="outlined"
+                      compact
+                      style={[styles.durationChip, { backgroundColor: theme.colors.secondaryContainer }]}
+                      textStyle={[styles.chipText, { color: theme.colors.secondary }]}
+                    >
+                      {formatDuration(workout.duration)}
+                    </Chip>
+                  </View>
+                </View>
+                {workout.notes && (
+                  <Text style={[styles.workoutNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
+                    {workout.notes}
+                  </Text>
+                )}
               </Card.Content>
             </Card>
-          ) : (
-            <View style={styles.workoutsList}>
-              {selectedWorkouts.map((workout) => (
-                <Card key={workout.id} style={styles.workoutCard}>
-                  <Card.Content>
-                    <View style={styles.workoutHeader}>
-                      <View style={styles.workoutInfo}>
-                        <View style={styles.workoutTitleRow}>
-                          <View
-                            style={[
-                              styles.workoutTypeIndicator,
-                              { backgroundColor: getWorkoutTypeColor(workout.name) },
-                            ]}
-                          />
-                          <Text style={styles.workoutName}>{workout.name}</Text>
-                        </View>
-                        <View style={styles.workoutMeta}>
-                          <Chip
-                            mode="outlined"
-                            compact
-                            style={styles.durationChip}
-                            textStyle={styles.chipText}
-                            icon="clock-plus"
-                          >
-                            {formatDuration(workout.duration)}
-                          </Chip>
-                          {workout.start_time && (
-                            <Chip
-                              mode="outlined"
-                              compact
-                              style={styles.timeChip}
-                              textStyle={styles.chipText}
-                              icon="clock"
-                            >
-                              {workout.start_time.slice(0, 5)}
-                            </Chip>
-                          )}
-                        </View>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.viewButton}
-                        onPress={() => {
-                          // Navigate to workout details
-                        }}
-                      >
-                        <Ionicons name="chevron-forward" size={20} color="#667EFF" />
-                      </TouchableOpacity>
-                    </View>
-                    {workout.notes && (
-                      <Text style={styles.workoutNotes} numberOfLines={2}>
-                        {workout.notes}
-                      </Text>
-                    )}
-                  </Card.Content>
-                </Card>
-              ))}
-            </View>
-          )}
-        </View>
-
-        {/* Quick Actions */}
-        <View style={styles.quickActions}>
-          <Button
-            mode="outlined"
-            onPress={() => navigation.navigate('Progress')}
-            style={styles.actionButton}
-            contentStyle={styles.actionButtonContent}
-            icon="bike-fast"
-          >
-            View Progress
-          </Button>
-          <Button
-            mode="contained"
-            onPress={() => navigation.navigate('Log Workout')}
-            style={styles.actionButton}
-            contentStyle={styles.actionButtonContent}
-            icon="briefcase-plus"
-          >
-            New Workout
-          </Button>
-        </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
@@ -353,77 +298,59 @@ export default function CalendarScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: spacing.lg,
     elevation: 2,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
   },
   headerTitle: {
-    ...typography.h4,
-    color: '#333333',
-  },
-  content: {
-    flex: 1,
-    padding: spacing.lg,
-  },
-  statsCard: {
-    elevation: 2,
-    borderRadius: 16,
-    marginBottom: spacing.lg,
-  },
-  statsTitle: {
-    ...typography.h4,
-    color: '#333333',
+    ...typography.h3,
     marginBottom: spacing.md,
   },
-  statsRow: {
+  headerStats: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    gap: spacing.xl,
   },
   statItem: {
     alignItems: 'center',
   },
   statNumber: {
-    ...typography.h3,
-    color: '#667EFF',
+    ...typography.h2,
     fontWeight: 'bold',
   },
   statLabel: {
     ...typography.caption,
-    color: '#666666',
     marginTop: 2,
   },
-  calendarCard: {
-    elevation: 2,
+  calendarContainer: {
+    margin: spacing.lg,
     borderRadius: 16,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  workoutsContainer: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+  },
+  workoutsHeader: {
     marginBottom: spacing.lg,
   },
-  selectedDateSection: {
-    marginBottom: spacing.lg,
-  },
-  selectedDateTitle: {
+  workoutsTitle: {
     ...typography.h4,
-    color: '#333333',
-    marginBottom: spacing.md,
   },
-  workoutsList: {
-    gap: spacing.md,
+  workoutsSubtitle: {
+    ...typography.body2,
+    marginTop: 2,
   },
   workoutCard: {
+    marginBottom: spacing.md,
     elevation: 1,
     borderRadius: 12,
+  },
+  workoutContent: {
+    paddingVertical: spacing.md,
   },
   workoutHeader: {
     flexDirection: 'row',
@@ -433,44 +360,25 @@ const styles = StyleSheet.create({
   workoutInfo: {
     flex: 1,
   },
-  workoutTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.sm,
-  },
-  workoutTypeIndicator: {
-    width: 4,
-    height: 20,
-    borderRadius: 2,
-    marginRight: spacing.sm,
-  },
   workoutName: {
     ...typography.h4,
-    color: '#333333',
-    flex: 1,
+  },
+  workoutTime: {
+    ...typography.body2,
+    marginTop: 2,
   },
   workoutMeta: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+    alignItems: 'flex-end',
   },
   durationChip: {
-    backgroundColor: '#E8F5E8',
-    borderColor: '#4CAF50',
-  },
-  timeChip: {
-    backgroundColor: '#E3F2FD',
-    borderColor: '#2196F3',
+    borderColor: 'transparent',
   },
   chipText: {
     ...typography.caption,
     fontWeight: '600',
   },
-  viewButton: {
-    padding: spacing.sm,
-  },
   workoutNotes: {
     ...typography.body2,
-    color: '#666666',
     marginTop: spacing.sm,
     fontStyle: 'italic',
   },
@@ -484,12 +392,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typography.h4,
-    color: '#333333',
     marginTop: spacing.md,
   },
   emptySubtitle: {
     ...typography.body2,
-    color: '#666666',
     textAlign: 'center',
     marginTop: spacing.sm,
     marginHorizontal: spacing.lg,
@@ -500,18 +406,5 @@ const styles = StyleSheet.create({
   },
   emptyButtonContent: {
     paddingHorizontal: spacing.lg,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-  },
-  actionButton: {
-    flex: 1,
-    borderRadius: 24,
-  },
-  actionButtonContent: {
-    paddingVertical: spacing.sm,
   },
 });

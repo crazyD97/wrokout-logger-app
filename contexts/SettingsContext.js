@@ -13,6 +13,11 @@ const fallbackStorage = {
     if (Platform.OS === 'web') {
       localStorage.setItem(key, value);
     }
+  },
+  async removeItem(key) {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+    }
   }
 };
 
@@ -34,16 +39,24 @@ export const useSettings = () => {
   return context;
 };
 
-export const SettingsProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [restTimerSound, setRestTimerSound] = useState(true);
-  const [userProfile, setUserProfile] = useState({
+const defaultSettings = {
+  isDarkMode: false,
+  notifications: true,
+  restTimerSound: true,
+  userProfile: {
     name: 'John Doe',
     email: 'john@example.com',
     weight: '175',
     height: '5\'10"',
-  });
+  },
+};
+
+export const SettingsProvider = ({ children }) => {
+  const [isDarkMode, setIsDarkMode] = useState(defaultSettings.isDarkMode);
+  const [notifications, setNotifications] = useState(defaultSettings.notifications);
+  const [restTimerSound, setRestTimerSound] = useState(defaultSettings.restTimerSound);
+  const [userProfile, setUserProfile] = useState(defaultSettings.userProfile);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load settings from storage on app start
   useEffect(() => {
@@ -55,13 +68,20 @@ export const SettingsProvider = ({ children }) => {
       const savedSettings = await AsyncStorage.getItem('appSettings');
       if (savedSettings) {
         const settings = JSON.parse(savedSettings);
-        setIsDarkMode(settings.isDarkMode || false);
-        setNotifications(settings.notifications !== undefined ? settings.notifications : true);
-        setRestTimerSound(settings.restTimerSound !== undefined ? settings.restTimerSound : true);
-        setUserProfile(settings.userProfile || userProfile);
+        setIsDarkMode(settings.isDarkMode ?? defaultSettings.isDarkMode);
+        setNotifications(settings.notifications ?? defaultSettings.notifications);
+        setRestTimerSound(settings.restTimerSound ?? defaultSettings.restTimerSound);
+        setUserProfile(settings.userProfile ?? defaultSettings.userProfile);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
+      // Use default settings if loading fails
+      setIsDarkMode(defaultSettings.isDarkMode);
+      setNotifications(defaultSettings.notifications);
+      setRestTimerSound(defaultSettings.restTimerSound);
+      setUserProfile(defaultSettings.userProfile);
+    } finally {
+      setIsInitialized(true);
     }
   };
 
@@ -120,15 +140,29 @@ export const SettingsProvider = ({ children }) => {
     saveSettings(newSettings);
   };
 
+  const resetSettings = async () => {
+    try {
+      await AsyncStorage.removeItem('appSettings');
+      setIsDarkMode(defaultSettings.isDarkMode);
+      setNotifications(defaultSettings.notifications);
+      setRestTimerSound(defaultSettings.restTimerSound);
+      setUserProfile(defaultSettings.userProfile);
+    } catch (error) {
+      console.error('Error resetting settings:', error);
+    }
+  };
+
   const value = {
     isDarkMode,
     notifications,
     restTimerSound,
     userProfile,
+    isInitialized,
     toggleDarkMode,
     toggleNotifications,
     toggleRestTimerSound,
     updateUserProfile,
+    resetSettings,
   };
 
   return (
