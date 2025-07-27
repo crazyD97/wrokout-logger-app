@@ -185,7 +185,7 @@ export default function CalendarScreen({ navigation }) {
   const monthStats = getMonthStats();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Calendar</Text>
@@ -227,11 +227,12 @@ export default function CalendarScreen({ navigation }) {
             textMonthFontSize: 18,
             textDayHeaderFontSize: 14,
           }}
+          style={styles.calendar}
         />
       </View>
 
       {/* Selected Date Workouts */}
-      <ScrollView style={styles.workoutsContainer} showsVerticalScrollIndicator={false}>
+      <View style={styles.workoutsContainer}>
         <View style={styles.workoutsHeader}>
           <Text style={[styles.workoutsTitle, { color: theme.colors.onSurface }]}>
             {formatDate(selectedDate)}
@@ -290,8 +291,8 @@ export default function CalendarScreen({ navigation }) {
             </Card>
           ))
         )}
-      </ScrollView>
-    </View>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -330,9 +331,12 @@ const styles = StyleSheet.create({
     elevation: 2,
     overflow: 'hidden',
   },
+  calendar: {
+    borderRadius: 16,
+  },
   workoutsContainer: {
-    flex: 1,
     paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
   },
   workoutsHeader: {
     marginBottom: spacing.lg,

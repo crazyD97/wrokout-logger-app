@@ -17,12 +17,14 @@ import {
   Chip,
   IconButton,
   Divider,
+  useTheme,
 } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
 
 export default function LogWorkoutScreen({ navigation }) {
+  const theme = useTheme();
   const [workoutName, setWorkoutName] = useState('');
   const [workoutNotes, setWorkoutNotes] = useState('');
   const [exercises, setExercises] = useState([]);
@@ -98,53 +100,49 @@ export default function LogWorkoutScreen({ navigation }) {
   const finishWorkout = async () => {
     try {
       const endTime = new Date();
-      const duration = Math.round((endTime - startTime) / (1000 * 60)); // Duration in minutes
+      const duration = Math.round((endTime - startTime) / 1000 / 60); // minutes
 
       const workout = {
         name: workoutName,
         date: new Date().toISOString().split('T')[0],
-        startTime: startTime.toTimeString().split(' ')[0],
-        endTime: endTime.toTimeString().split(' ')[0],
+        startTime: startTime.toTimeString().slice(0, 5),
+        endTime: endTime.toTimeString().slice(0, 5),
         duration,
         notes: workoutNotes,
       };
 
       const workoutId = await DatabaseService.createWorkout(workout);
+      setCurrentWorkoutId(workoutId);
 
       // Add exercises to workout
       for (const exercise of selectedExercises) {
-        const repsData = exercise.sets.map(set => `${set.reps}`).join(',');
-        const weightData = exercise.sets.map(set => `${set.weight || 0}`).join(',');
-        
-        await DatabaseService.addExerciseToWorkout(workoutId, {
-          exerciseId: exercise.id,
-          sets: exercise.sets.length,
-          reps: repsData,
-          weight: weightData,
-          notes: '',
-        });
+        await DatabaseService.addExerciseToWorkout(workoutId, exercise);
       }
 
       Alert.alert(
-        'Workout Completed!',
-        `Great job! You completed your ${workoutName} workout in ${duration} minutes.`,
+        'Workout Complete!',
+        `Great job! You completed your workout in ${duration} minutes.`,
         [
           {
-            text: 'OK',
-            onPress: () => {
-              // Reset form
-              setWorkoutName('');
-              setWorkoutNotes('');
-              setSelectedExercises([]);
-              setIsWorkoutActive(false);
-              setStartTime(null);
-              navigation.navigate('Home');
-            },
+            text: 'View Progress',
+            onPress: () => navigation.navigate('Progress'),
+          },
+          {
+            text: 'Home',
+            onPress: () => navigation.navigate('Home'),
           },
         ]
       );
+
+      // Reset state
+      setIsWorkoutActive(false);
+      setWorkoutName('');
+      setWorkoutNotes('');
+      setSelectedExercises([]);
+      setStartTime(null);
+      setCurrentWorkoutId(null);
     } catch (error) {
-      console.error('Error saving workout:', error);
+      console.error('Error finishing workout:', error);
       Alert.alert('Error', 'Failed to save workout. Please try again.');
     }
   };
@@ -154,15 +152,15 @@ export default function LogWorkoutScreen({ navigation }) {
       'Cancel Workout',
       'Are you sure you want to cancel this workout? All progress will be lost.',
       [
-        { text: 'Continue Workout', style: 'cancel' },
+        { text: 'Keep Working Out', style: 'cancel' },
         {
           text: 'Cancel Workout',
           style: 'destructive',
           onPress: () => {
+            setIsWorkoutActive(false);
             setWorkoutName('');
             setWorkoutNotes('');
             setSelectedExercises([]);
-            setIsWorkoutActive(false);
             setStartTime(null);
           },
         },
@@ -172,8 +170,7 @@ export default function LogWorkoutScreen({ navigation }) {
 
   const formatElapsedTime = () => {
     if (!startTime) return '00:00';
-    const now = new Date();
-    const elapsed = Math.floor((now - startTime) / 1000);
+    const elapsed = Math.floor((new Date() - startTime) / 1000);
     const minutes = Math.floor(elapsed / 60);
     const seconds = elapsed % 60;
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
@@ -189,20 +186,20 @@ export default function LogWorkoutScreen({ navigation }) {
   }, {});
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#333333" />
+            <Ionicons name="arrow-back" size={24} color={theme.colors.onSurface} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>
+          <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>
             {isWorkoutActive ? 'Active Workout' : 'Log Workout'}
           </Text>
         </View>
         {isWorkoutActive && (
           <View style={styles.timerContainer}>
-            <Text style={styles.timerText}>{formatElapsedTime()}</Text>
+            <Text style={[styles.timerText, { color: theme.colors.primary }]}>{formatElapsedTime()}</Text>
           </View>
         )}
       </View>
@@ -210,15 +207,16 @@ export default function LogWorkoutScreen({ navigation }) {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Workout Setup */}
         {!isWorkoutActive && (
-          <Card style={styles.setupCard}>
+          <Card style={[styles.setupCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content>
-              <Text style={styles.sectionTitle}>Workout Details</Text>
+              <Text style={[styles.sectionTitle, { color: theme.colors.onSurface }]}>Workout Details</Text>
               <TextInput
                 label="Workout Name"
                 value={workoutName}
                 onChangeText={setWorkoutName}
                 style={styles.input}
                 placeholder="e.g., Push Day, Full Body, etc."
+                theme={theme}
               />
               <TextInput
                 label="Notes (Optional)"
@@ -228,6 +226,7 @@ export default function LogWorkoutScreen({ navigation }) {
                 multiline
                 numberOfLines={3}
                 placeholder="Any notes about this workout..."
+                theme={theme}
               />
               <Button
                 mode="contained"
@@ -246,22 +245,22 @@ export default function LogWorkoutScreen({ navigation }) {
         {isWorkoutActive && (
           <>
             {/* Workout Info */}
-            <Card style={styles.workoutInfoCard}>
+            <Card style={[styles.workoutInfoCard, { backgroundColor: theme.colors.surface }]}>
               <Card.Content>
-                <Text style={styles.workoutTitle}>{workoutName}</Text>
+                <Text style={[styles.workoutTitle, { color: theme.colors.onSurface }]}>{workoutName}</Text>
                 {workoutNotes && (
-                  <Text style={styles.workoutNotes}>{workoutNotes}</Text>
+                  <Text style={[styles.workoutNotes, { color: theme.colors.onSurfaceVariant }]}>{workoutNotes}</Text>
                 )}
                 <View style={styles.workoutStats}>
                   <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>{selectedExercises.length}</Text>
-                    <Text style={styles.statLabel}>Exercises</Text>
+                    <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{selectedExercises.length}</Text>
+                    <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Exercises</Text>
                   </View>
                   <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>
+                    <Text style={[styles.statNumber, { color: theme.colors.secondary }]}>
                       {selectedExercises.reduce((total, ex) => total + ex.sets.length, 0)}
                     </Text>
-                    <Text style={styles.statLabel}>Sets</Text>
+                    <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Sets</Text>
                   </View>
                 </View>
               </Card.Content>
@@ -269,71 +268,73 @@ export default function LogWorkoutScreen({ navigation }) {
 
             {/* Exercise List */}
             {selectedExercises.map((exercise, exerciseIndex) => (
-              <Card key={exerciseIndex} style={styles.exerciseCard}>
+              <Card key={exerciseIndex} style={[styles.exerciseCard, { backgroundColor: theme.colors.surface }]}>
                 <Card.Content>
                   <View style={styles.exerciseHeader}>
                     <View style={styles.exerciseInfo}>
-                      <Text style={styles.exerciseName}>{exercise.name}</Text>
-                      <Text style={styles.exerciseMuscles}>{exercise.muscle_groups}</Text>
+                      <Text style={[styles.exerciseName, { color: theme.colors.onSurface }]}>{exercise.name}</Text>
+                      <Text style={[styles.exerciseMuscles, { color: theme.colors.onSurfaceVariant }]}>{exercise.muscle_groups}</Text>
                     </View>
                     <IconButton
                       icon="close"
                       size={20}
                       onPress={() => removeExercise(exerciseIndex)}
+                      iconColor={theme.colors.error}
                     />
                   </View>
 
                   {/* Sets */}
                   <View style={styles.setsContainer}>
                     <View style={styles.setHeader}>
-                      <Text style={styles.setHeaderText}>Set</Text>
-                      <Text style={styles.setHeaderText}>Reps</Text>
-                      <Text style={styles.setHeaderText}>Weight</Text>
-                      <Text style={styles.setHeaderText}>✓</Text>
+                      <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>Set</Text>
+                      <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>Reps</Text>
+                      <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>Weight</Text>
+                      <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>✓</Text>
                     </View>
                     {exercise.sets.map((set, setIndex) => (
                       <View key={setIndex} style={styles.setRow}>
-                        <Text style={styles.setNumber}>{setIndex + 1}</Text>
+                        <Text style={[styles.setNumber, { color: theme.colors.onSurface }]}>{setIndex + 1}</Text>
                         <TextInput
                           value={set.reps}
                           onChangeText={(value) =>
                             updateSet(exerciseIndex, setIndex, 'reps', value)
                           }
-                          style={styles.setInput}
+                          style={[styles.setInput, { backgroundColor: theme.colors.surfaceVariant }]}
                           keyboardType="numeric"
                           placeholder="0"
+                          theme={theme}
                         />
                         <TextInput
                           value={set.weight}
                           onChangeText={(value) =>
                             updateSet(exerciseIndex, setIndex, 'weight', value)
                           }
-                          style={styles.setInput}
+                          style={[styles.setInput, { backgroundColor: theme.colors.surfaceVariant }]}
                           keyboardType="numeric"
                           placeholder="0"
+                          theme={theme}
                         />
                         <TouchableOpacity
                           style={[
-                            styles.checkButton,
-                            set.completed && styles.checkButtonCompleted,
+                            styles.completeButton,
+                            {
+                              backgroundColor: set.completed ? theme.colors.primary : theme.colors.surfaceVariant,
+                            },
                           ]}
                           onPress={() => toggleSetComplete(exerciseIndex, setIndex)}
                         >
                           <Ionicons
                             name={set.completed ? 'checkmark' : 'ellipse-outline'}
-                            size={20}
-                            color={set.completed ? '#FFFFFF' : '#999999'}
+                            size={16}
+                            color={set.completed ? '#FFFFFF' : theme.colors.onSurfaceVariant}
                           />
                         </TouchableOpacity>
                       </View>
                     ))}
-                  </View>
-
-                  <View style={styles.setActions}>
                     <Button
                       mode="outlined"
                       onPress={() => addSet(exerciseIndex)}
-                      compact
+                      style={styles.addSetButton}
                       icon="plus"
                     >
                       Add Set
@@ -344,30 +345,34 @@ export default function LogWorkoutScreen({ navigation }) {
             ))}
 
             {/* Add Exercise Button */}
-            <TouchableOpacity
-              style={styles.addExerciseButton}
-              onPress={() => setShowExerciseModal(true)}
-            >
-              <Ionicons name="add" size={24} color="#667EFF" />
-              <Text style={styles.addExerciseText}>Add Exercise</Text>
-            </TouchableOpacity>
+            <Card style={[styles.addExerciseCard, { backgroundColor: theme.colors.surface }]}>
+              <Card.Content>
+                <Button
+                  mode="outlined"
+                  onPress={() => setShowExerciseModal(true)}
+                  style={styles.addExerciseButton}
+                  icon="plus"
+                >
+                  Add Exercise
+                </Button>
+              </Card.Content>
+            </Card>
 
-            {/* Workout Actions */}
-            <View style={styles.workoutActions}>
+            {/* Action Buttons */}
+            <View style={styles.actionButtons}>
               <Button
                 mode="outlined"
                 onPress={cancelWorkout}
-                style={styles.cancelButton}
-                contentStyle={styles.actionButtonContent}
+                style={[styles.actionButton, { borderColor: theme.colors.error }]}
+                textColor={theme.colors.error}
               >
-                Cancel
+                Cancel Workout
               </Button>
               <Button
                 mode="contained"
                 onPress={finishWorkout}
-                style={styles.finishButton}
-                contentStyle={styles.actionButtonContent}
-                disabled={selectedExercises.length === 0}
+                style={styles.actionButton}
+                icon="check"
               >
                 Finish Workout
               </Button>
@@ -381,43 +386,36 @@ export default function LogWorkoutScreen({ navigation }) {
         <Modal
           visible={showExerciseModal}
           onDismiss={() => setShowExerciseModal(false)}
-          contentContainerStyle={styles.modalContainer}
+          contentContainerStyle={[styles.modal, { backgroundColor: theme.colors.surface }]}
         >
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Select Exercise</Text>
+            <Text style={[styles.modalTitle, { color: theme.colors.onSurface }]}>Select Exercise</Text>
             <IconButton
               icon="close"
+              size={24}
               onPress={() => setShowExerciseModal(false)}
+              iconColor={theme.colors.onSurface}
             />
           </View>
-          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+          <ScrollView style={styles.modalContent}>
             {Object.entries(groupedExercises).map(([category, categoryExercises]) => (
-              <View key={category}>
-                <Text style={styles.categoryTitle}>{category}</Text>
+              <View key={category} style={styles.categorySection}>
+                <Text style={[styles.categoryTitle, { color: theme.colors.primary }]}>{category}</Text>
                 {categoryExercises.map((exercise) => (
-                  <List.Item
+                  <TouchableOpacity
                     key={exercise.id}
-                    title={exercise.name}
-                    description={exercise.muscle_groups}
-                    left={(props) => (
-                      <View
-                        style={[
-                          styles.categoryIcon,
-                          { backgroundColor: exercise.category_color + '20' },
-                        ]}
-                      >
-                        <Ionicons
-                          name="fitness"
-                          size={24}
-                          color={exercise.category_color}
-                        />
-                      </View>
-                    )}
+                    style={[styles.exerciseItem, { backgroundColor: theme.colors.surfaceVariant }]}
                     onPress={() => addExercise(exercise)}
-                    style={styles.exerciseListItem}
-                  />
+                  >
+                    <View>
+                      <Text style={[styles.exerciseItemName, { color: theme.colors.onSurface }]}>{exercise.name}</Text>
+                      <Text style={[styles.exerciseItemMuscles, { color: theme.colors.onSurfaceVariant }]}>
+                        {exercise.muscle_groups}
+                      </Text>
+                    </View>
+                    <Ionicons name="add" size={20} color={theme.colors.primary} />
+                  </TouchableOpacity>
                 ))}
-                <Divider style={styles.categoryDivider} />
               </View>
             ))}
           </ScrollView>
@@ -430,7 +428,6 @@ export default function LogWorkoutScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -439,7 +436,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
-    backgroundColor: '#FFFFFF',
     elevation: 2,
   },
   headerLeft: {
@@ -449,18 +445,16 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...typography.h4,
-    color: '#333333',
   },
   timerContainer: {
-    backgroundColor: '#667EFF',
+    backgroundColor: 'rgba(102, 126, 255, 0.1)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    borderRadius: 16,
+    borderRadius: 20,
   },
   timerText: {
     ...typography.body1,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   content: {
     flex: 1,
@@ -469,22 +463,21 @@ const styles = StyleSheet.create({
   setupCard: {
     elevation: 2,
     borderRadius: 16,
+    marginBottom: spacing.lg,
   },
   sectionTitle: {
     ...typography.h4,
-    color: '#333333',
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
   },
   input: {
     marginBottom: spacing.md,
-    backgroundColor: '#FFFFFF',
   },
   startButton: {
     marginTop: spacing.md,
     borderRadius: 24,
   },
   startButtonContent: {
-    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   workoutInfoCard: {
     elevation: 2,
@@ -493,14 +486,12 @@ const styles = StyleSheet.create({
   },
   workoutTitle: {
     ...typography.h3,
-    color: '#333333',
     marginBottom: spacing.sm,
   },
   workoutNotes: {
     ...typography.body2,
-    color: '#666666',
-    fontStyle: 'italic',
     marginBottom: spacing.md,
+    fontStyle: 'italic',
   },
   workoutStats: {
     flexDirection: 'row',
@@ -511,12 +502,10 @@ const styles = StyleSheet.create({
   },
   statNumber: {
     ...typography.h2,
-    color: '#667EFF',
     fontWeight: 'bold',
   },
   statLabel: {
     ...typography.caption,
-    color: '#666666',
     marginTop: 2,
   },
   exerciseCard: {
@@ -535,26 +524,21 @@ const styles = StyleSheet.create({
   },
   exerciseName: {
     ...typography.h4,
-    color: '#333333',
   },
   exerciseMuscles: {
     ...typography.body2,
-    color: '#666666',
     marginTop: 2,
   },
   setsContainer: {
-    marginBottom: spacing.md,
+    gap: spacing.sm,
   },
   setHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   setHeaderText: {
-    ...typography.body2,
-    color: '#666666',
+    ...typography.caption,
     fontWeight: '600',
     flex: 1,
     textAlign: 'center',
@@ -562,12 +546,10 @@ const styles = StyleSheet.create({
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
   setNumber: {
-    ...typography.body1,
-    color: '#333333',
+    ...typography.body2,
     fontWeight: '600',
     width: 30,
     textAlign: 'center',
@@ -575,59 +557,38 @@ const styles = StyleSheet.create({
   setInput: {
     flex: 1,
     height: 40,
-    backgroundColor: '#F5F5F5',
-    textAlign: 'center',
+    borderRadius: 8,
+    paddingHorizontal: spacing.sm,
   },
-  checkButton: {
-    width: 40,
-    height: 40,
+  completeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addSetButton: {
+    marginTop: spacing.sm,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  checkButtonCompleted: {
-    backgroundColor: '#4CAF50',
-  },
-  setActions: {
-    alignItems: 'flex-start',
-  },
-  addExerciseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.lg,
-    borderWidth: 2,
-    borderColor: '#667EFF',
-    borderStyle: 'dashed',
+  addExerciseCard: {
+    elevation: 1,
     borderRadius: 12,
     marginBottom: spacing.lg,
-    gap: spacing.sm,
   },
-  addExerciseText: {
-    ...typography.body1,
-    color: '#667EFF',
-    fontWeight: '600',
+  addExerciseButton: {
+    borderRadius: 20,
   },
-  workoutActions: {
+  actionButtons: {
     flexDirection: 'row',
     gap: spacing.md,
-    marginTop: spacing.lg,
     marginBottom: spacing.xl,
   },
-  cancelButton: {
+  actionButton: {
     flex: 1,
     borderRadius: 24,
   },
-  finishButton: {
-    flex: 1,
-    borderRadius: 24,
-  },
-  actionButtonContent: {
-    paddingVertical: spacing.sm,
-  },
-  modalContainer: {
-    backgroundColor: '#FFFFFF',
+  modal: {
     margin: spacing.lg,
     borderRadius: 16,
     maxHeight: '80%',
@@ -636,35 +597,37 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.lg,
+    padding: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
   modalTitle: {
     ...typography.h4,
-    color: '#333333',
   },
   modalContent: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
+    padding: spacing.lg,
+  },
+  categorySection: {
+    marginBottom: spacing.lg,
   },
   categoryTitle: {
     ...typography.h4,
-    color: '#333333',
-    marginTop: spacing.md,
+    marginBottom: spacing.md,
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: spacing.md,
+    borderRadius: 8,
     marginBottom: spacing.sm,
   },
-  categoryIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: spacing.md,
+  exerciseItemName: {
+    ...typography.body1,
+    fontWeight: '600',
   },
-  exerciseListItem: {
-    paddingVertical: spacing.sm,
-  },
-  categoryDivider: {
-    marginVertical: spacing.md,
+  exerciseItemMuscles: {
+    ...typography.caption,
+    marginTop: 2,
   },
 });

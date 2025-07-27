@@ -20,6 +20,18 @@ A comprehensive fitness tracking app built with React Native and Expo.
 - ✅ **Consistent Theming**: All components now respond to theme changes
 - ✅ **Better Loading States**: Added proper loading indicators with theme colors
 
+### Dark Mode Fixes
+- ✅ **LogWorkoutScreen**: Fixed white backgrounds and text color issues in dark mode
+- ✅ **ProgressScreen**: Fixed chart backgrounds and text colors for dark theme
+- ✅ **CalendarScreen**: Improved calendar theme integration
+- ✅ **Navigation**: Theme-aware tab bar and navigation elements
+
+### Layout & UI Improvements
+- ✅ **Calendar Layout**: Fixed calendar positioning to give more space to workouts section
+- ✅ **Gradient Reduction**: Made gradients more subtle and less overwhelming
+- ✅ **Flexible Calendar**: Added maxHeight constraint for better space distribution
+- ✅ **Better Spacing**: Improved spacing and layout across all screens
+
 ### Settings & Context
 - ✅ **Robust SettingsContext**: Better error handling and initialization
 - ✅ **AsyncStorage Integration**: Proper fallback for web and mobile platforms
@@ -89,6 +101,26 @@ The app uses SQLite for data persistence with:
 - **Categories Table**: Exercise categories
 - **Personal Records**: Track personal bests
 - **Web Fallback**: localStorage for web platform
+
+## Recent Bug Fixes
+
+### Dark Mode Issues (Fixed ✅)
+- **LogWorkoutScreen**: Fixed white backgrounds and unreadable text in dark mode
+- **ProgressScreen**: Fixed chart backgrounds and text colors for dark theme
+- **CalendarScreen**: Improved calendar theme integration
+- **Navigation**: Theme-aware tab bar styling
+
+### Layout Issues (Fixed ✅)
+- **Calendar Layout**: Calendar now has flexible height with maxHeight constraint
+- **Workouts Section**: More space available for displaying selected date workouts
+- **Gradient Intensity**: Reduced gradient intensity for better visual appeal
+- **Spacing**: Improved spacing and layout consistency
+
+### UI Improvements (Fixed ✅)
+- **Subtle Gradients**: Made gradients more subtle and less overwhelming
+- **Better Contrast**: Improved text contrast in both light and dark modes
+- **Consistent Theming**: All components now properly follow theme colors
+- **Responsive Layout**: Better space distribution across all screens
 
 ## Contributing
 

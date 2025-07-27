@@ -62,7 +62,7 @@ export default function HomeScreen({ navigation }) {
     <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} showsVerticalScrollIndicator={false}>
       {/* Header */}
       <LinearGradient
-        colors={[theme.colors.primary, theme.colors.primaryContainer]}
+        colors={[theme.colors.primary, theme.colors.primary + 'E6']}
         style={styles.header}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -114,7 +114,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('Log Workout')}
           >
             <LinearGradient
-              colors={[theme.colors.primary, theme.colors.primaryContainer]}
+              colors={[theme.colors.primary, theme.colors.primary + 'CC']}
               style={styles.actionButtonGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}

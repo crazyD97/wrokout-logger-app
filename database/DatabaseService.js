@@ -271,10 +271,29 @@ class DatabaseServiceImp {
       return;
     }
     
-    return await this.db.runAsync(
-      'INSERT INTO workout_exercises (workout_id, exercise_id, sets, reps, weight, distance, duration, rest_time, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [workoutId, exercise.exerciseId, exercise.sets, exercise.reps, exercise.weight, exercise.distance, exercise.duration, exercise.restTime, exercise.notes]
-    );
+    try {
+      // Extract exercise data properly
+      const exerciseId = exercise.id || exercise.exerciseId;
+      const sets = exercise.sets ? exercise.sets.length : 0;
+      const reps = exercise.sets ? exercise.sets.map(set => set.reps || '').join(',') : '';
+      const weight = exercise.sets ? exercise.sets.map(set => set.weight || '').join(',') : '';
+      
+      console.log('Mobile: Adding exercise to workout', {
+        workoutId,
+        exerciseId,
+        sets,
+        reps,
+        weight
+      });
+      
+      return await this.db.runAsync(
+        'INSERT INTO workout_exercises (workout_id, exercise_id, sets, reps, weight, distance, duration, rest_time, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [workoutId, exerciseId, sets, reps, weight, null, null, null, exercise.notes || '']
+      );
+    } catch (error) {
+      console.error('Mobile: Error adding exercise to workout:', error);
+      throw error;
+    }
   }
 
   async getWorkouts(limit = 10) {

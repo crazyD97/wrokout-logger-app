@@ -7,7 +7,7 @@ import {
   Dimensions,
   TouchableOpacity,
 } from 'react-native';
-import { Card, Chip, Button } from 'react-native-paper';
+import { Card, Chip, Button, useTheme } from 'react-native-paper';
 import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
@@ -17,6 +17,7 @@ const { width } = Dimensions.get('window');
 const chartWidth = width - spacing.lg * 2;
 
 export default function ProgressScreen({ navigation }) {
+  const theme = useTheme();
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const [workoutData, setWorkoutData] = useState([]);
   const [stats, setStats] = useState({
@@ -104,11 +105,11 @@ export default function ProgressScreen({ navigation }) {
 
     // Mock muscle group distribution (would need exercise data)
     const muscleGroupDistribution = [
-      { name: 'Chest', population: 25, color: '#FF6B6B', legendFontColor: '#333', legendFontSize: 12 },
-      { name: 'Back', population: 20, color: '#4ECDC4', legendFontColor: '#333', legendFontSize: 12 },
-      { name: 'Legs', population: 30, color: '#45B7D1', legendFontColor: '#333', legendFontSize: 12 },
-      { name: 'Arms', population: 15, color: '#FECA57', legendFontColor: '#333', legendFontSize: 12 },
-      { name: 'Core', population: 10, color: '#FF9FF3', legendFontColor: '#333', legendFontSize: 12 },
+      { name: 'Chest', population: 25, color: '#FF6B6B', legendFontColor: theme.colors.onSurface, legendFontSize: 12 },
+      { name: 'Back', population: 20, color: '#4ECDC4', legendFontColor: theme.colors.onSurface, legendFontSize: 12 },
+      { name: 'Legs', population: 30, color: '#45B7D1', legendFontColor: theme.colors.onSurface, legendFontSize: 12 },
+      { name: 'Arms', population: 15, color: '#FECA57', legendFontColor: theme.colors.onSurface, legendFontSize: 12 },
+      { name: 'Core', population: 10, color: '#FF9FF3', legendFontColor: theme.colors.onSurface, legendFontSize: 12 },
     ];
 
     setChartData({
@@ -121,29 +122,27 @@ export default function ProgressScreen({ navigation }) {
   const generateWeeklyData = (workouts) => {
     const weeks = [];
     const data = [];
-    const labels = [];
-
+    
     // Get last 8 weeks
     for (let i = 7; i >= 0; i--) {
-      const weekStart = new Date();
-      weekStart.setDate(weekStart.getDate() - (i * 7));
-      weekStart.setHours(0, 0, 0, 0);
+      const date = new Date();
+      date.setDate(date.getDate() - (i * 7));
+      const weekStart = new Date(date);
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay());
       
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
-      weekEnd.setHours(23, 59, 59, 999);
-
+      
       const weekWorkouts = workouts.filter(w => {
         const workoutDate = new Date(w.date);
         return workoutDate >= weekStart && workoutDate <= weekEnd;
       });
-
-      weeks.push({ start: weekStart, end: weekEnd, count: weekWorkouts.length });
+      
+      weeks.push(`${weekStart.getMonth() + 1}/${weekStart.getDate()}`);
       data.push(weekWorkouts.length);
-      labels.push(`${weekStart.getMonth() + 1}/${weekStart.getDate()}`);
     }
-
-    return { labels, data };
+    
+    return { labels: weeks, data };
   };
 
   const formatDuration = (minutes) => {
@@ -153,36 +152,35 @@ export default function ProgressScreen({ navigation }) {
     return hours > 0 ? `${hours}h ${mins}m` : `${mins}min`;
   };
 
-  const chartConfig = {
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
-    color: (opacity = 1) => `rgba(102, 126, 255, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`,
-    strokeWidth: 2,
-    barPercentage: 0.7,
-    decimalPlaces: 0,
-    propsForLabels: {
-      fontSize: 12,
-      fontFamily: 'Poppins-Regular',
-    },
-    propsForVerticalLabels: {
-      fontSize: 10,
-    },
-  };
-
   const periods = [
     { key: 'week', label: 'Week' },
     { key: 'month', label: 'Month' },
     { key: 'year', label: 'Year' },
   ];
 
+  const chartConfig = {
+    backgroundGradientFrom: theme.colors.surface,
+    backgroundGradientTo: theme.colors.surface,
+    color: (opacity = 1) => `rgba(102, 126, 255, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(${theme.colors.onSurface === '#FFFFFF' ? '255, 255, 255' : '0, 0, 0'}, ${opacity})`,
+    strokeWidth: 2,
+    barPercentage: 0.7,
+    decimalPlaces: 0,
+    propsForLabels: {
+      fontSize: 12,
+    },
+    propsForVerticalLabels: {
+      fontSize: 10,
+    },
+  };
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Your Progress</Text>
+      <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
+        <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Your Progress</Text>
         <TouchableOpacity onPress={() => navigation.navigate('Settings')}>
-          <Ionicons name="settings-outline" size={24} color="#333333" />
+          <Ionicons name="settings-outline" size={24} color={theme.colors.onSurface} />
         </TouchableOpacity>
       </View>
 
@@ -197,11 +195,11 @@ export default function ProgressScreen({ navigation }) {
               onPress={() => setSelectedPeriod(period.key)}
               style={[
                 styles.periodChip,
-                selectedPeriod === period.key && styles.selectedPeriodChip,
+                selectedPeriod === period.key && { backgroundColor: theme.colors.primary },
               ]}
               textStyle={[
                 styles.periodChipText,
-                selectedPeriod === period.key && styles.selectedPeriodChipText,
+                { color: selectedPeriod === period.key ? '#FFFFFF' : theme.colors.primary },
               ]}
             >
               {period.label}
@@ -211,55 +209,55 @@ export default function ProgressScreen({ navigation }) {
 
         {/* Stats Overview */}
         <View style={styles.statsGrid}>
-          <Card style={styles.statCard}>
+          <Card style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content style={styles.statContent}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="fitness" size={24} color="#667EFF" />
+              <View style={[styles.statIconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
+                <Ionicons name="fitness" size={24} color={theme.colors.primary} />
               </View>
-              <Text style={styles.statNumber}>{stats.totalWorkouts}</Text>
-              <Text style={styles.statLabel}>Total Workouts</Text>
+              <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.totalWorkouts}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Total Workouts</Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.statCard}>
+          <Card style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content style={styles.statContent}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="time" size={24} color="#4CAF50" />
+              <View style={[styles.statIconContainer, { backgroundColor: theme.colors.secondaryContainer }]}>
+                <Ionicons name="time" size={24} color={theme.colors.secondary} />
               </View>
-              <Text style={styles.statNumber}>{formatDuration(stats.averageDuration)}</Text>
-              <Text style={styles.statLabel}>Avg Duration</Text>
+              <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{formatDuration(stats.averageDuration)}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Avg Duration</Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.statCard}>
+          <Card style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content style={styles.statContent}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="calendar" size={24} color="#FF9800" />
+              <View style={[styles.statIconContainer, { backgroundColor: theme.colors.errorContainer }]}>
+                <Ionicons name="calendar" size={24} color={theme.colors.error} />
               </View>
-              <Text style={styles.statNumber}>{stats.weeklyAverage}</Text>
-              <Text style={styles.statLabel}>This Week</Text>
+              <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.weeklyAverage}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>This Week</Text>
             </Card.Content>
           </Card>
 
-          <Card style={styles.statCard}>
+          <Card style={[styles.statCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content style={styles.statContent}>
-              <View style={styles.statIconContainer}>
-                <Ionicons name="trending-up" size={24} color="#E91E63" />
+              <View style={[styles.statIconContainer, { backgroundColor: theme.colors.primaryContainer }]}>
+                <Ionicons name="trending-up" size={24} color={theme.colors.primary} />
               </View>
-              <Text style={styles.statNumber}>
+              <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>
                 {stats.totalWorkouts > 0 ? '+12%' : '0%'}
               </Text>
-              <Text style={styles.statLabel}>vs Last Month</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>vs Last Month</Text>
             </Card.Content>
           </Card>
         </View>
 
         {/* Workout Frequency Chart */}
         {chartData.workoutsPerWeek && (
-          <Card style={styles.chartCard}>
+          <Card style={[styles.chartCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content>
-              <Text style={styles.chartTitle}>Workout Frequency</Text>
-              <Text style={styles.chartSubtitle}>Workouts per week</Text>
+              <Text style={[styles.chartTitle, { color: theme.colors.onSurface }]}>Workout Frequency</Text>
+              <Text style={[styles.chartSubtitle, { color: theme.colors.onSurfaceVariant }]}>Workouts per week</Text>
               <LineChart
                 data={chartData.workoutsPerWeek}
                 width={chartWidth - 32}
@@ -278,10 +276,10 @@ export default function ProgressScreen({ navigation }) {
 
         {/* Duration Trend Chart */}
         {chartData.durationTrend && (
-          <Card style={styles.chartCard}>
+          <Card style={[styles.chartCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content>
-              <Text style={styles.chartTitle}>Duration Trend</Text>
-              <Text style={styles.chartSubtitle}>Average workout duration (minutes)</Text>
+              <Text style={[styles.chartTitle, { color: theme.colors.onSurface }]}>Duration Trend</Text>
+              <Text style={[styles.chartSubtitle, { color: theme.colors.onSurfaceVariant }]}>Average workout duration (minutes)</Text>
               <LineChart
                 data={chartData.durationTrend}
                 width={chartWidth - 32}
@@ -303,10 +301,10 @@ export default function ProgressScreen({ navigation }) {
 
         {/* Muscle Group Distribution */}
         {chartData.muscleGroupDistribution && (
-          <Card style={styles.chartCard}>
+          <Card style={[styles.chartCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content>
-              <Text style={styles.chartTitle}>Muscle Group Focus</Text>
-              <Text style={styles.chartSubtitle}>Distribution of exercises by muscle group</Text>
+              <Text style={[styles.chartTitle, { color: theme.colors.onSurface }]}>Muscle Group Focus</Text>
+              <Text style={[styles.chartSubtitle, { color: theme.colors.onSurfaceVariant }]}>Distribution of exercises by muscle group</Text>
               <PieChart
                 data={chartData.muscleGroupDistribution}
                 width={chartWidth - 32}
@@ -322,10 +320,10 @@ export default function ProgressScreen({ navigation }) {
         )}
 
         {/* Personal Records Section */}
-        <Card style={styles.recordsCard}>
+        <Card style={[styles.recordsCard, { backgroundColor: theme.colors.surface }]}>
           <Card.Content>
             <View style={styles.recordsHeader}>
-              <Text style={styles.chartTitle}>Personal Records</Text>
+              <Text style={[styles.chartTitle, { color: theme.colors.onSurface }]}>Personal Records</Text>
               <Button
                 mode="outlined"
                 compact
@@ -338,39 +336,39 @@ export default function ProgressScreen({ navigation }) {
             <View style={styles.recordsList}>
               <View style={styles.recordItem}>
                 <View style={styles.recordInfo}>
-                  <Text style={styles.recordExercise}>Bench Press</Text>
-                  <Text style={styles.recordDate}>2 days ago</Text>
+                  <Text style={[styles.recordExercise, { color: theme.colors.onSurface }]}>Bench Press</Text>
+                  <Text style={[styles.recordDate, { color: theme.colors.onSurfaceVariant }]}>2 days ago</Text>
                 </View>
                 <View style={styles.recordValue}>
-                  <Text style={styles.recordWeight}>185 lbs</Text>
-                  <View style={styles.recordBadge}>
-                    <Text style={styles.recordBadgeText}>PR</Text>
+                  <Text style={[styles.recordWeight, { color: theme.colors.onSurface }]}>185 lbs</Text>
+                  <View style={[styles.recordBadge, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={[styles.recordBadgeText, { color: '#FFFFFF' }]}>PR</Text>
                   </View>
                 </View>
               </View>
 
               <View style={styles.recordItem}>
                 <View style={styles.recordInfo}>
-                  <Text style={styles.recordExercise}>Squats</Text>
-                  <Text style={styles.recordDate}>1 week ago</Text>
+                  <Text style={[styles.recordExercise, { color: theme.colors.onSurface }]}>Squats</Text>
+                  <Text style={[styles.recordDate, { color: theme.colors.onSurfaceVariant }]}>1 week ago</Text>
                 </View>
                 <View style={styles.recordValue}>
-                  <Text style={styles.recordWeight}>225 lbs</Text>
-                  <View style={styles.recordBadge}>
-                    <Text style={styles.recordBadgeText}>PR</Text>
+                  <Text style={[styles.recordWeight, { color: theme.colors.onSurface }]}>225 lbs</Text>
+                  <View style={[styles.recordBadge, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={[styles.recordBadgeText, { color: '#FFFFFF' }]}>PR</Text>
                   </View>
                 </View>
               </View>
 
               <View style={styles.recordItem}>
                 <View style={styles.recordInfo}>
-                  <Text style={styles.recordExercise}>Pull-ups</Text>
-                  <Text style={styles.recordDate}>3 days ago</Text>
+                  <Text style={[styles.recordExercise, { color: theme.colors.onSurface }]}>Pull-ups</Text>
+                  <Text style={[styles.recordDate, { color: theme.colors.onSurfaceVariant }]}>3 days ago</Text>
                 </View>
                 <View style={styles.recordValue}>
-                  <Text style={styles.recordWeight}>15 reps</Text>
-                  <View style={styles.recordBadge}>
-                    <Text style={styles.recordBadgeText}>PR</Text>
+                  <Text style={[styles.recordWeight, { color: theme.colors.onSurface }]}>15 reps</Text>
+                  <View style={[styles.recordBadge, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={[styles.recordBadgeText, { color: '#FFFFFF' }]}>PR</Text>
                   </View>
                 </View>
               </View>
@@ -380,11 +378,11 @@ export default function ProgressScreen({ navigation }) {
 
         {/* Empty State */}
         {workoutData.length === 0 && (
-          <Card style={styles.emptyCard}>
+          <Card style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}>
             <Card.Content style={styles.emptyContent}>
-              <Ionicons name="bar-chart-outline" size={64} color="#B0B0B0" />
-              <Text style={styles.emptyTitle}>No data yet</Text>
-              <Text style={styles.emptySubtitle}>
+              <Ionicons name="bar-chart-outline" size={64} color={theme.colors.onSurfaceVariant} />
+              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No data yet</Text>
+              <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
                 Start logging workouts to see your progress here!
               </Text>
               <Button
@@ -406,7 +404,6 @@ export default function ProgressScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
@@ -415,12 +412,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
-    backgroundColor: '#FFFFFF',
     elevation: 2,
   },
   headerTitle: {
     ...typography.h3,
-    color: '#333333',
   },
   content: {
     flex: 1,
@@ -432,16 +427,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   periodChip: {
-    backgroundColor: '#FFFFFF',
-  },
-  selectedPeriodChip: {
-    backgroundColor: '#667EFF',
+    backgroundColor: 'transparent',
   },
   periodChipText: {
-    color: '#667EFF',
-  },
-  selectedPeriodChipText: {
-    color: '#FFFFFF',
+    fontWeight: '600',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -463,19 +452,16 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#F0F2FF',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: spacing.sm,
   },
   statNumber: {
     ...typography.h3,
-    color: '#333333',
     fontWeight: 'bold',
   },
   statLabel: {
     ...typography.caption,
-    color: '#666666',
     textAlign: 'center',
     marginTop: 2,
   },
@@ -486,12 +472,10 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     ...typography.h4,
-    color: '#333333',
     marginBottom: 4,
   },
   chartSubtitle: {
     ...typography.body2,
-    color: '#666666',
     marginBottom: spacing.lg,
   },
   chart: {
@@ -524,19 +508,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
   recordInfo: {
     flex: 1,
   },
   recordExercise: {
     ...typography.body1,
-    color: '#333333',
     fontWeight: '600',
   },
   recordDate: {
     ...typography.caption,
-    color: '#666666',
     marginTop: 2,
   },
   recordValue: {
@@ -546,18 +528,15 @@ const styles = StyleSheet.create({
   },
   recordWeight: {
     ...typography.body1,
-    color: '#333333',
     fontWeight: 'bold',
   },
   recordBadge: {
-    backgroundColor: '#4CAF50',
     paddingHorizontal: spacing.sm,
     paddingVertical: 2,
     borderRadius: 8,
   },
   recordBadgeText: {
     ...typography.caption,
-    color: '#FFFFFF',
     fontWeight: 'bold',
   },
   emptyCard: {
@@ -570,12 +549,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     ...typography.h4,
-    color: '#333333',
     marginTop: spacing.lg,
   },
   emptySubtitle: {
     ...typography.body2,
-    color: '#666666',
     textAlign: 'center',
     marginTop: spacing.sm,
     marginHorizontal: spacing.lg,
