@@ -9,10 +9,11 @@ import * as Font from 'expo-font';
 import AppNavigator from './navigation/AppNavigator';
 import { DatabaseService } from './database/DatabaseService';
 import { lightTheme, darkTheme } from './constants/theme';
+import { SettingsProvider, useSettings } from './contexts/SettingsContext';
 
-export default function App() {
+function AppContent() {
   const [isReady, setIsReady] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const { isDarkMode } = useSettings();
 
   useEffect(() => {
     async function prepare() {
@@ -22,14 +23,14 @@ export default function App() {
         await DatabaseService.init();
         console.log('Database initialized successfully');
         
-        // Load fonts
-        console.log('Loading fonts...');
-        await Font.loadAsync({
-          'Poppins-Regular': require('./assets/fonts/Poppins-Regular.ttf'),
-          'Poppins-Bold': require('./assets/fonts/Poppins-Bold.ttf'),
-          'Poppins-SemiBold': require('./assets/fonts/Poppins-SemiBold.ttf'),
-        });
-        console.log('Fonts loaded successfully');
+        // Fonts commented out - files don't exist
+        // console.log('Loading fonts...');
+        // await Font.loadAsync({
+        //   'Poppins-Regular': require('./assets/fonts/Poppins-Regular.ttf'),
+        //   'Poppins-Bold': require('./assets/fonts/Poppins-Bold.ttf'),
+        //   'Poppins-SemiBold': require('./assets/fonts/Poppins-SemiBold.ttf'),
+        // });
+        // console.log('Fonts loaded successfully');
       } catch (e) {
         console.error('App initialization error:', e);
         // Still set ready to true so the app can load even if database fails
@@ -45,18 +46,27 @@ export default function App() {
     return null;
   }
 
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const paperTheme = isDarkMode ? darkTheme : lightTheme;
+  const navigationTheme = paperTheme.navigation || paperTheme;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <PaperProvider theme={theme}>
-          <NavigationContainer theme={theme}>
+        <PaperProvider theme={paperTheme}>
+          <NavigationContainer theme={navigationTheme}>
             <AppNavigator />
             <StatusBar style={isDarkMode ? 'light' : 'dark'} />
           </NavigationContainer>
         </PaperProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
+  );
+}
+
+export default function App() {
+  return (
+    <SettingsProvider>
+      <AppContent />
+    </SettingsProvider>
   );
 }

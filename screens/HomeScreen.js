@@ -204,8 +204,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
   },
   header: {
-    paddingTop: 60,
-    paddingBottom: 30,
+    paddingTop: spacing.xxl,
+    paddingBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,

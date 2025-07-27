@@ -1,4 +1,5 @@
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+import { MD3LightTheme, MD3DarkTheme } from 'react-native-paper';
 
 const colors = {
   primary: '#667EFF',
@@ -33,58 +34,58 @@ const darkColors = {
 };
 
 export const lightTheme = {
-  ...DefaultTheme,
+  ...MD3LightTheme,
   colors: {
-    ...DefaultTheme.colors,
-    ...colors,
+    ...MD3LightTheme.colors,
     primary: colors.primary,
-    background: colors.background,
-    card: colors.surface,
-    text: colors.text,
-    border: colors.cardBorder,
-    notification: colors.primary,
-    // react-native-paper specific colors
-    onSurface: colors.text,
+    onPrimary: '#FFFFFF',
     surface: colors.surface,
+    onSurface: colors.text,
+    background: colors.background,
+    onBackground: colors.text,
     surfaceVariant: colors.background,
     onSurfaceVariant: colors.textSecondary,
   },
-  roundness: 12,
-  elevation: {
-    level0: 0,
-    level1: 2,
-    level2: 4,
-    level3: 6,
-    level4: 8,
-    level5: 12,
+  // Navigation theme properties
+  navigation: {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: colors.primary,
+      background: colors.background,
+      card: colors.surface,
+      text: colors.text,
+      border: colors.cardBorder,
+      notification: colors.primary,
+    },
   },
 };
 
 export const darkTheme = {
-  ...DarkTheme,
+  ...MD3DarkTheme,
   colors: {
-    ...DarkTheme.colors,
-    ...darkColors,
+    ...MD3DarkTheme.colors,
     primary: darkColors.primary,
-    background: darkColors.background,
-    card: darkColors.surface,
-    text: darkColors.text,
-    border: darkColors.cardBorder,
-    notification: darkColors.primary,
-    // react-native-paper specific colors
-    onSurface: darkColors.text,
+    onPrimary: '#FFFFFF',
     surface: darkColors.surface,
+    onSurface: darkColors.text,
+    background: darkColors.background,
+    onBackground: darkColors.text,
     surfaceVariant: darkColors.background,
     onSurfaceVariant: darkColors.textSecondary,
   },
-  roundness: 12,
-  elevation: {
-    level0: 0,
-    level1: 2,
-    level2: 4,
-    level3: 6,
-    level4: 8,
-    level5: 12,
+  // Navigation theme properties
+  navigation: {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      primary: darkColors.primary,
+      background: darkColors.background,
+      card: darkColors.surface,
+      text: darkColors.text,
+      border: darkColors.cardBorder,
+      notification: darkColors.primary,
+    },
   },
 };
 
@@ -102,42 +103,35 @@ export const typography = {
     fontSize: 32,
     fontWeight: 'bold',
     lineHeight: 40,
-    fontFamily: 'Poppins-Bold',
   },
   h2: {
     fontSize: 28,
     fontWeight: 'bold',
     lineHeight: 36,
-    fontFamily: 'Poppins-Bold',
   },
   h3: {
     fontSize: 24,
     fontWeight: '600',
     lineHeight: 32,
-    fontFamily: 'Poppins-SemiBold',
   },
   h4: {
     fontSize: 20,
     fontWeight: '600',
     lineHeight: 28,
-    fontFamily: 'Poppins-SemiBold',
   },
   body1: {
     fontSize: 16,
     fontWeight: 'normal',
     lineHeight: 24,
-    fontFamily: 'Poppins-Regular',
   },
   body2: {
     fontSize: 14,
     fontWeight: 'normal',
     lineHeight: 20,
-    fontFamily: 'Poppins-Regular',
   },
   caption: {
     fontSize: 12,
     fontWeight: 'normal',
     lineHeight: 16,
-    fontFamily: 'Poppins-Regular',
   },
 };

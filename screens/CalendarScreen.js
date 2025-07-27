@@ -286,7 +286,7 @@ export default function CalendarScreen({ navigation }) {
                             compact
                             style={styles.durationChip}
                             textStyle={styles.chipText}
-                            icon="time"
+                            icon="clock-plus"
                           >
                             {formatDuration(workout.duration)}
                           </Chip>
@@ -331,7 +331,7 @@ export default function CalendarScreen({ navigation }) {
             onPress={() => navigation.navigate('Progress')}
             style={styles.actionButton}
             contentStyle={styles.actionButtonContent}
-            icon="analytics"
+            icon="bike-fast"
           >
             View Progress
           </Button>
@@ -340,7 +340,7 @@ export default function CalendarScreen({ navigation }) {
             onPress={() => navigation.navigate('Log Workout')}
             style={styles.actionButton}
             contentStyle={styles.actionButtonContent}
-            icon="add"
+            icon="briefcase-plus"
           >
             New Workout
           </Button>
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: 60,
+    paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
     backgroundColor: '#FFFFFF',
     elevation: 2,

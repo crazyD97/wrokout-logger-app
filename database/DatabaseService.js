@@ -10,7 +10,8 @@ class DatabaseServiceImp {
   async init() {
     try {
       if (this.isWeb) {
-        console.log('Running on web, SQLite not available. Using mock data.');
+        console.log('Running on web, SQLite not available. Using localStorage.');
+        this.initWebStorage();
         return;
       }
       
@@ -24,6 +25,28 @@ class DatabaseServiceImp {
       console.error('Database initialization error:', error);
       throw error;
     }
+  }
+
+  initWebStorage() {
+    // Initialize localStorage with default data if it doesn't exist
+    if (!localStorage.getItem('workouts')) {
+      localStorage.setItem('workouts', JSON.stringify([]));
+    }
+    if (!localStorage.getItem('exercises')) {
+      localStorage.setItem('exercises', JSON.stringify(this.getMockExercises()));
+    }
+    if (!localStorage.getItem('exercise_categories')) {
+      localStorage.setItem('exercise_categories', JSON.stringify([
+        { id: 1, name: 'Chest', icon: 'fitness', color: '#FF6B6B' },
+        { id: 2, name: 'Back', icon: 'body', color: '#4ECDC4' },
+        { id: 3, name: 'Legs', icon: 'walk', color: '#45B7D1' },
+        { id: 4, name: 'Shoulders', icon: 'fitness', color: '#96CEB4' },
+        { id: 5, name: 'Arms', icon: 'fitness', color: '#FECA57' },
+        { id: 6, name: 'Core', icon: 'fitness', color: '#FF9FF3' },
+        { id: 7, name: 'Cardio', icon: 'heart', color: '#54A0FF' }
+      ]));
+    }
+    console.log('Web storage initialized');
   }
 
   async createTables() {
@@ -211,15 +234,35 @@ class DatabaseServiceImp {
   // Workout methods
   async createWorkout(workout) {
     if (this.isWeb) {
-      console.log('Mock: Creating workout', workout);
-      return Date.now(); // Mock ID
+      const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+      const newWorkout = {
+        id: Date.now(),
+        name: workout.name,
+        date: workout.date,
+        start_time: workout.startTime,
+        end_time: workout.endTime,
+        duration: workout.duration,
+        notes: workout.notes,
+        created_at: new Date().toISOString()
+      };
+      workouts.push(newWorkout);
+      localStorage.setItem('workouts', JSON.stringify(workouts));
+      console.log('Web: Created workout', newWorkout);
+      return newWorkout.id;
     }
     
-    const result = await this.db.runAsync(
-      'INSERT INTO workouts (name, date, start_time, end_time, duration, notes) VALUES (?, ?, ?, ?, ?, ?)',
-      [workout.name, workout.date, workout.startTime, workout.endTime, workout.duration, workout.notes]
-    );
-    return result.lastInsertRowId;
+    try {
+      console.log('Mobile: Attempting to create workout:', workout);
+      const result = await this.db.runAsync(
+        'INSERT INTO workouts (name, date, start_time, end_time, duration, notes) VALUES (?, ?, ?, ?, ?, ?)',
+        [workout.name, workout.date, workout.startTime, workout.endTime, workout.duration, workout.notes]
+      );
+      console.log('Mobile: Workout created successfully with ID:', result.lastInsertRowId);
+      return result.lastInsertRowId;
+    } catch (error) {
+      console.error('Mobile: Error creating workout:', error);
+      throw error;
+    }
   }
 
   async addExerciseToWorkout(workoutId, exercise) {
@@ -236,13 +279,24 @@ class DatabaseServiceImp {
 
   async getWorkouts(limit = 10) {
     if (this.isWeb) {
-      return this.getMockWorkouts().slice(0, limit);
+      const workouts = JSON.parse(localStorage.getItem('workouts') || '[]');
+      return workouts
+        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .slice(0, limit);
     }
     
-    return await this.db.getAllAsync(
-      'SELECT * FROM workouts ORDER BY date DESC, created_at DESC LIMIT ?',
-      [limit]
-    );
+    try {
+      console.log('Mobile: Fetching workouts from database...');
+      const workouts = await this.db.getAllAsync(
+        'SELECT * FROM workouts ORDER BY date DESC, created_at DESC LIMIT ?',
+        [limit]
+      );
+      console.log('Mobile: Found', workouts.length, 'workouts:', workouts);
+      return workouts;
+    } catch (error) {
+      console.error('Mobile: Error fetching workouts:', error);
+      return [];
+    }
   }
 
   async getWorkoutById(id) {
@@ -325,6 +379,41 @@ class DatabaseServiceImp {
       'SELECT * FROM workouts WHERE date BETWEEN ? AND ? ORDER BY date',
       [startDate, endDate]
     );
+  }
+
+  // Debug method to check database contents
+  async debugDatabaseContents() {
+    if (this.isWeb) {
+      console.log('Web: localStorage workouts:', localStorage.getItem('workouts'));
+      return;
+    }
+
+    try {
+      console.log('=== DATABASE DEBUG ===');
+      
+      // Check if database is initialized
+      console.log('Database object:', this.db ? 'Initialized' : 'Not initialized');
+      
+      // Count workouts
+      const workoutCount = await this.db.getFirstAsync('SELECT COUNT(*) as count FROM workouts');
+      console.log('Total workouts in database:', workoutCount.count);
+      
+      // Get all workouts
+      const allWorkouts = await this.db.getAllAsync('SELECT * FROM workouts');
+      console.log('All workouts:', allWorkouts);
+      
+      // Count exercises
+      const exerciseCount = await this.db.getFirstAsync('SELECT COUNT(*) as count FROM exercises');
+      console.log('Total exercises in database:', exerciseCount.count);
+      
+      // Check table structure
+      const tables = await this.db.getAllAsync("SELECT name FROM sqlite_master WHERE type='table'");
+      console.log('Database tables:', tables.map(t => t.name));
+      
+      console.log('=== END DEBUG ===');
+    } catch (error) {
+      console.error('Debug error:', error);
+    }
   }
 }
 

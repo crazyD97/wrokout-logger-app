@@ -19,19 +19,34 @@ import {
 } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { spacing, typography, lightTheme, darkTheme } from '../constants/theme';
+import { useSettings } from '../contexts/SettingsContext';
 
 export default function SettingsScreen({ navigation }) {
-  const [darkMode, setDarkMode] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [restTimerSound, setRestTimerSound] = useState(true);
-  const [showAboutDialog, setShowAboutDialog] = useState(false);
-  const [showBackupDialog, setShowBackupDialog] = useState(false);
-  const [userProfile, setUserProfile] = useState({
+  // Fallback state in case context fails
+  const [localDarkMode, setLocalDarkMode] = useState(false);
+  const [localNotifications, setLocalNotifications] = useState(true);
+  const [localRestTimerSound, setLocalRestTimerSound] = useState(true);
+  const [localUserProfile, setLocalUserProfile] = useState({
     name: 'John Doe',
     email: 'john@example.com',
     weight: '175',
     height: '5\'10"',
   });
+
+  // Use local state only for now to prevent crashes
+  const isDarkMode = localDarkMode;
+  const notifications = localNotifications;
+  const restTimerSound = localRestTimerSound;
+  const userProfile = localUserProfile;
+  const toggleDarkMode = () => setLocalDarkMode(!localDarkMode);
+  const toggleNotifications = () => setLocalNotifications(!localNotifications);
+  const toggleRestTimerSound = () => setLocalRestTimerSound(!localRestTimerSound);
+  const updateUserProfile = setLocalUserProfile;
+  
+  const [showAboutDialog, setShowAboutDialog] = useState(false);
+  const [showBackupDialog, setShowBackupDialog] = useState(false);
+  const [showProfileDialog, setShowProfileDialog] = useState(false);
+  const [editedProfile, setEditedProfile] = useState(userProfile);
 
   const handleExportData = () => {
     Alert.alert(
@@ -114,8 +129,8 @@ export default function SettingsScreen({ navigation }) {
           description: 'Switch between light and dark themes',
           icon: 'moon',
           type: 'switch',
-          value: darkMode,
-          onValueChange: setDarkMode,
+          value: isDarkMode,
+          onValueChange: toggleDarkMode,
         },
         {
           title: 'Notifications',
@@ -123,7 +138,7 @@ export default function SettingsScreen({ navigation }) {
           icon: 'notifications',
           type: 'switch',
           value: notifications,
-          onValueChange: setNotifications,
+          onValueChange: toggleNotifications,
         },
         {
           title: 'Rest Timer Sound',
@@ -131,7 +146,7 @@ export default function SettingsScreen({ navigation }) {
           icon: 'volume-high',
           type: 'switch',
           value: restTimerSound,
-          onValueChange: setRestTimerSound,
+          onValueChange: toggleRestTimerSound,
         },
       ],
     },
@@ -221,7 +236,13 @@ export default function SettingsScreen({ navigation }) {
                   {userProfile.height} • {userProfile.weight} lbs
                 </Text>
               </View>
-              <TouchableOpacity style={styles.editButton}>
+              <TouchableOpacity 
+                style={styles.editButton}
+                onPress={() => {
+                  setEditedProfile(userProfile);
+                  setShowProfileDialog(true);
+                }}
+              >
                 <Ionicons name="pencil" size={20} color="#667EFF" />
               </TouchableOpacity>
             </View>
@@ -367,6 +388,53 @@ export default function SettingsScreen({ navigation }) {
           </Dialog.Actions>
         </Dialog>
       </Portal>
+
+      {/* Profile Edit Dialog */}
+      <Portal>
+        <Dialog
+          visible={showProfileDialog}
+          onDismiss={() => setShowProfileDialog(false)}
+        >
+          <Dialog.Title>Edit Profile</Dialog.Title>
+          <Dialog.Content>
+            <TextInput
+              label="Name"
+              value={editedProfile.name}
+              onChangeText={(text) => setEditedProfile({ ...editedProfile, name: text })}
+              style={{ marginBottom: spacing.md }}
+            />
+            <TextInput
+              label="Email"
+              value={editedProfile.email}
+              onChangeText={(text) => setEditedProfile({ ...editedProfile, email: text })}
+              style={{ marginBottom: spacing.md }}
+            />
+            <TextInput
+              label="Height"
+              value={editedProfile.height}
+              onChangeText={(text) => setEditedProfile({ ...editedProfile, height: text })}
+              style={{ marginBottom: spacing.md }}
+            />
+            <TextInput
+              label="Weight (lbs)"
+              value={editedProfile.weight}
+              onChangeText={(text) => setEditedProfile({ ...editedProfile, weight: text })}
+            />
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button onPress={() => setShowProfileDialog(false)}>Cancel</Button>
+            <Button 
+              onPress={() => {
+                updateUserProfile(editedProfile);
+                setShowProfileDialog(false);
+                Alert.alert('Success', 'Profile updated successfully!');
+              }}
+            >
+              Save
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </View>
   );
 }
@@ -381,7 +449,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: 60,
+    paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
     backgroundColor: '#FFFFFF',
     elevation: 2,

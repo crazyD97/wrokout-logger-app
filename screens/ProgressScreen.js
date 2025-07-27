@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing.lg,
-    paddingTop: 60,
+    paddingTop: spacing.xxl,
     paddingBottom: spacing.lg,
     backgroundColor: '#FFFFFF',
     elevation: 2,
