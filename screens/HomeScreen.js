@@ -90,6 +90,10 @@ export default function HomeScreen({ navigation }) {
             </View>
             <View>
               <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.totalWorkouts}</Text>
+            </View>
+          </Card.Content>
+          <Card.Content style={styles.statContent}>
+            <View>
               <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Total Workouts</Text>
             </View>
           </Card.Content>
@@ -102,7 +106,11 @@ export default function HomeScreen({ navigation }) {
             </View>
             <View>
               <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.weeklyWorkouts}</Text>
-              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>This Week</Text>
+            </View>
+          </Card.Content>
+          <Card.Content style={styles.statContent}>
+            <View>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts This Week</Text>
             </View>
           </Card.Content>
         </Card>
@@ -245,7 +253,7 @@ const styles = StyleSheet.create({
   statContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.xs,
   },
   statIcon: {
     width: 48,
@@ -295,7 +303,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   actionButtonText: {
     ...typography.body1,
@@ -308,7 +316,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.lg,
     borderRadius: 16,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   actionButtonSecondaryText: {
     ...typography.body1,
