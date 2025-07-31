@@ -12,6 +12,7 @@ import { Card, Button, Chip, useTheme } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
+import eventBus from '../utils/EventBus';
 
 const { width } = Dimensions.get('window');
 
@@ -26,6 +27,8 @@ export default function HomeScreen({ navigation }) {
 
   useEffect(() => {
     loadData();
+    const unsub = eventBus.on('workout:added', loadData);
+    return () => unsub();
   }, []);
 
   const loadData = async () => {
@@ -87,6 +90,10 @@ export default function HomeScreen({ navigation }) {
             </View>
             <View>
               <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.totalWorkouts}</Text>
+            </View>
+          </Card.Content>
+          <Card.Content style={styles.statContent}>
+            <View>
               <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Total Workouts</Text>
             </View>
           </Card.Content>
@@ -99,7 +106,11 @@ export default function HomeScreen({ navigation }) {
             </View>
             <View>
               <Text style={[styles.statNumber, { color: theme.colors.onSurface }]}>{stats.weeklyWorkouts}</Text>
-              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>This Week</Text>
+            </View>
+          </Card.Content>
+          <Card.Content style={styles.statContent}>
+            <View>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts This Week</Text>
             </View>
           </Card.Content>
         </Card>
@@ -242,7 +253,7 @@ const styles = StyleSheet.create({
   statContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.xs,
   },
   statIcon: {
     width: 48,
@@ -272,6 +283,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.h4,
+    paddingBottom: spacing.sm
   },
   seeAllText: {
     ...typography.body2,
@@ -291,7 +303,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.lg,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   actionButtonText: {
     ...typography.body1,
@@ -304,7 +316,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: spacing.lg,
     borderRadius: 16,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   actionButtonSecondaryText: {
     ...typography.body1,

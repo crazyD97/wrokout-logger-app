@@ -22,6 +22,7 @@ import {
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
+import eventBus from '../utils/EventBus';
 
 export default function LogWorkoutScreen({ navigation }) {
   const theme = useTheme();
@@ -118,6 +119,8 @@ export default function LogWorkoutScreen({ navigation }) {
       for (const exercise of selectedExercises) {
         await DatabaseService.addExerciseToWorkout(workoutId, exercise);
       }
+
+      eventBus.emit('workout:added');
 
       Alert.alert(
         'Workout Complete!',
@@ -272,7 +275,10 @@ export default function LogWorkoutScreen({ navigation }) {
                 <Card.Content>
                   <View style={styles.exerciseHeader}>
                     <View style={styles.exerciseInfo}>
-                      <Text style={[styles.exerciseName, { color: theme.colors.onSurface }]}>{exercise.name}</Text>
+                      <View style={styles.exerciseIconRow}>
+                        <Ionicons name={exercise.icon || 'barbell'} size={28} color={theme.colors.primary} style={{ marginRight: spacing.sm }} />
+                        <Text style={[styles.exerciseName, { color: theme.colors.onSurface }]}>{exercise.name}</Text>
+                      </View>
                       <Text style={[styles.exerciseMuscles, { color: theme.colors.onSurfaceVariant }]}>{exercise.muscle_groups}</Text>
                     </View>
                     <IconButton
@@ -290,6 +296,7 @@ export default function LogWorkoutScreen({ navigation }) {
                       <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>Reps</Text>
                       <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>Weight</Text>
                       <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>✓</Text>
+                      <Text style={[styles.setHeaderText, { color: theme.colors.onSurfaceVariant }]}>Remove</Text>
                     </View>
                     {exercise.sets.map((set, setIndex) => (
                       <View key={setIndex} style={styles.setRow}>
@@ -329,13 +336,20 @@ export default function LogWorkoutScreen({ navigation }) {
                             color={set.completed ? '#FFFFFF' : theme.colors.onSurfaceVariant}
                           />
                         </TouchableOpacity>
+                        <IconButton
+                          icon="remove-circle"
+                          size={20}
+                          onPress={() => removeSet(exerciseIndex, setIndex)}
+                          iconColor={theme.colors.error}
+                          style={{ marginLeft: -8 }}
+                        />
                       </View>
                     ))}
                     <Button
                       mode="outlined"
                       onPress={() => addSet(exerciseIndex)}
                       style={styles.addSetButton}
-                      icon="plus"
+                      icon="add-circle"
                     >
                       Add Set
                     </Button>
@@ -528,6 +542,11 @@ const styles = StyleSheet.create({
   exerciseMuscles: {
     ...typography.body2,
     marginTop: 2,
+  },
+  exerciseIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
   setsContainer: {
     gap: spacing.sm,

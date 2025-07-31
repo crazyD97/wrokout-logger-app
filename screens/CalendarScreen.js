@@ -11,6 +11,7 @@ import { Card, Button, Chip, useTheme } from 'react-native-paper';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
+import eventBus from '../utils/EventBus';
 
 export default function CalendarScreen({ navigation }) {
   const theme = useTheme();
@@ -24,6 +25,8 @@ export default function CalendarScreen({ navigation }) {
 
   useEffect(() => {
     loadWorkoutData();
+    const unsub = eventBus.on('workout:added', loadWorkoutData);
+    return () => unsub();
   }, []);
 
   useEffect(() => {
@@ -56,7 +59,7 @@ export default function CalendarScreen({ navigation }) {
         // Mark the date on calendar
         marked[date] = {
           marked: true,
-          dotColor: theme.colors.primary,
+          dotColor: theme.colors.secondary,
           customStyles: {
             container: {
               backgroundColor: workoutsByDate[date].length > 1 ? theme.colors.primary : 'transparent',
@@ -93,7 +96,7 @@ export default function CalendarScreen({ navigation }) {
 
     // Update marked dates to highlight selected date
     const updatedMarked = { ...markedDates };
-    
+
     // Remove previous selection
     Object.keys(updatedMarked).forEach(date => {
       if (updatedMarked[date].selected) {
@@ -185,114 +188,126 @@ export default function CalendarScreen({ navigation }) {
   const monthStats = getMonthStats();
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} showsVerticalScrollIndicator={false}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.colors.surface }]}>
         <Text style={[styles.headerTitle, { color: theme.colors.onSurface }]}>Calendar</Text>
-        <View style={styles.headerStats}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{monthStats.totalWorkouts}</Text>
-            <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts</Text>
+        <View style={styles.headerStatsRow}>
+          <View style={styles.headerStats}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: theme.colors.primary }]}>{monthStats.totalWorkouts}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Workouts</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: theme.colors.secondary }]}>{formatDuration(monthStats.totalDuration)}</Text>
+              <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Duration</Text>
+            </View>
           </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statNumber, { color: theme.colors.secondary }]}>{formatDuration(monthStats.totalDuration)}</Text>
-            <Text style={[styles.statLabel, { color: theme.colors.onSurfaceVariant }]}>Duration</Text>
-          </View>
+          <TouchableOpacity
+            style={{ marginLeft: spacing.lg, alignSelf: 'center' }}
+            onPress={() => navigation.navigate('Log Workout')}
+          >
+            <Ionicons name="add-circle" size={32} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
-
-      {/* Calendar */}
-      <View style={[styles.calendarContainer, { backgroundColor: theme.colors.surface }]}>
-        <Calendar
-          onDayPress={onDayPress}
-          markedDates={markedDates}
-          theme={{
-            backgroundColor: theme.colors.surface,
-            calendarBackground: theme.colors.surface,
-            textSectionTitleColor: theme.colors.onSurface,
-            selectedDayBackgroundColor: theme.colors.primary,
-            selectedDayTextColor: '#FFFFFF',
-            todayTextColor: theme.colors.primary,
-            dayTextColor: theme.colors.onSurface,
-            textDisabledColor: theme.colors.onSurfaceDisabled,
-            dotColor: theme.colors.primary,
-            selectedDotColor: '#FFFFFF',
-            arrowColor: theme.colors.primary,
-            monthTextColor: theme.colors.onSurface,
-            indicatorColor: theme.colors.primary,
-            textDayFontWeight: '300',
-            textMonthFontWeight: 'bold',
-            textDayHeaderFontWeight: '500',
-            textDayFontSize: 16,
-            textMonthFontSize: 18,
-            textDayHeaderFontSize: 14,
-          }}
-          style={styles.calendar}
-        />
-      </View>
-
-      {/* Selected Date Workouts */}
-      <View style={styles.workoutsContainer}>
-        <View style={styles.workoutsHeader}>
-          <Text style={[styles.workoutsTitle, { color: theme.colors.onSurface }]}>
-            {formatDate(selectedDate)}
-          </Text>
-          <Text style={[styles.workoutsSubtitle, { color: theme.colors.onSurfaceVariant }]}>
-            {selectedWorkouts.length} workout{selectedWorkouts.length !== 1 ? 's' : ''}
-          </Text>
+      <ScrollView style={[styles.container, { backgroundColor: theme.colors.background }]} showsVerticalScrollIndicator={false}>
+        {/* Calendar */}
+        <View style={[styles.calendarContainer, { backgroundColor: theme.colors.surface }]}>
+          <Calendar
+            onDayPress={onDayPress}
+            markedDates={markedDates}
+            theme={{
+              backgroundColor: theme.colors.surface,
+              calendarBackground: theme.colors.surface,
+              textSectionTitleColor: theme.colors.onSurface,
+              selectedDayBackgroundColor: theme.colors.primary,
+              selectedDayTextColor: '#FFFFFF',
+              todayTextColor: theme.colors.primary,
+              dayTextColor: theme.colors.onSurface,
+              textDisabledColor: theme.colors.onSurfaceDisabled,
+              dotColor: theme.colors.primary,
+              selectedDotColor: '#FFFFFF',
+              arrowColor: theme.colors.primary,
+              monthTextColor: theme.colors.onSurface,
+              indicatorColor: theme.colors.primary,
+              textDayFontWeight: '300',
+              textMonthFontWeight: 'bold',
+              textDayHeaderFontWeight: '500',
+              textDayFontSize: 16,
+              textMonthFontSize: 18,
+              textDayHeaderFontSize: 14,
+            }}
+            style={styles.calendar}
+          />
         </View>
 
-        {selectedWorkouts.length === 0 ? (
-          <Card style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}>
-            <Card.Content style={styles.emptyContent}>
-              <Ionicons name="calendar-outline" size={48} color={theme.colors.onSurfaceVariant} />
-              <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No workouts</Text>
-              <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
-                No workouts scheduled for this date
-              </Text>
-              <Button
-                mode="contained"
-                onPress={() => navigation.navigate('Log Workout')}
-                style={styles.emptyButton}
-                contentStyle={styles.emptyButtonContent}
-              >
-                Log Workout
-              </Button>
-            </Card.Content>
-          </Card>
-        ) : (
-          selectedWorkouts.map((workout, index) => (
-            <Card key={workout.id} style={[styles.workoutCard, { backgroundColor: theme.colors.surface }]}>
-              <Card.Content style={styles.workoutContent}>
-                <View style={styles.workoutHeader}>
-                  <View style={styles.workoutInfo}>
-                    <Text style={[styles.workoutName, { color: theme.colors.onSurface }]}>{workout.name}</Text>
-                    <Text style={[styles.workoutTime, { color: theme.colors.onSurfaceVariant }]}>
-                      {workout.start_time} - {workout.end_time}
-                    </Text>
-                  </View>
-                  <View style={styles.workoutMeta}>
-                    <Chip
-                      mode="outlined"
-                      compact
-                      style={[styles.durationChip, { backgroundColor: theme.colors.secondaryContainer }]}
-                      textStyle={[styles.chipText, { color: theme.colors.secondary }]}
-                    >
-                      {formatDuration(workout.duration)}
-                    </Chip>
-                  </View>
-                </View>
-                {workout.notes && (
-                  <Text style={[styles.workoutNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
-                    {workout.notes}
-                  </Text>
-                )}
+        {/* Selected Date Workouts */}
+        <View style={styles.workoutsContainer}>
+          <View style={styles.workoutsHeader}>
+            <Text style={[styles.workoutsTitle, { color: theme.colors.onSurface }]}>
+              {formatDate(selectedDate)}
+            </Text>
+            <Text style={[styles.workoutsSubtitle, { color: theme.colors.onSurfaceVariant }]}>
+              {selectedWorkouts.length} workout{selectedWorkouts.length !== 1 ? 's' : ''}
+            </Text>
+          </View>
+
+          {selectedWorkouts.length === 0 ? (
+            <Card style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}>
+              <Card.Content style={styles.emptyContent}>
+                <Ionicons name="calendar-outline" size={48} color={theme.colors.onSurfaceVariant} />
+                <Text style={[styles.emptyTitle, { color: theme.colors.onSurface }]}>No workouts</Text>
+                <Text style={[styles.emptySubtitle, { color: theme.colors.onSurfaceVariant }]}>
+                  No workouts scheduled for this date
+                </Text>
+                <Button
+                  mode="contained"
+                  onPress={() => navigation.navigate('Log Workout')}
+                  style={styles.emptyButton}
+                  contentStyle={styles.emptyButtonContent}
+                >
+                  Log Workout
+                </Button>
               </Card.Content>
             </Card>
-          ))
-        )}
-      </View>
-    </ScrollView>
+          ) : (
+            selectedWorkouts.map((workout, index) => (
+              <Card key={workout.id} style={[styles.workoutCard, { backgroundColor: theme.colors.surface }]}>
+                <Card.Content style={styles.workoutContent}>
+                  <View style={styles.workoutHeader}>
+                    <View style={styles.workoutInfo}>
+                      <View style={styles.workoutIconRow}>
+                        <Ionicons name={workout.icon || 'barbell'} size={24} color={theme.colors.primary} style={{ marginRight: spacing.sm }} />
+                        <Text style={[styles.workoutName, { color: theme.colors.onSurface }]}>{workout.name}</Text>
+                      </View>
+                      <Text style={[styles.workoutTime, { color: theme.colors.onSurfaceVariant }]}>
+                        {workout.start_time} - {workout.end_time}
+                      </Text>
+                    </View>
+                    <View style={styles.workoutMeta}>
+                      <Chip
+                        mode="outlined"
+                        compact
+                        style={[styles.durationChip, { backgroundColor: theme.colors.secondaryContainer }]}
+                        textStyle={[styles.chipText, { color: theme.colors.secondary }]}
+                      >
+                        {formatDuration(workout.duration)}
+                      </Chip>
+                    </View>
+                  </View>
+                  {workout.notes && (
+                    <Text style={[styles.workoutNotes, { color: theme.colors.onSurfaceVariant }]} numberOfLines={2}>
+                      {workout.notes}
+                    </Text>
+                  )}
+                </Card.Content>
+              </Card>
+            ))
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -313,6 +328,11 @@ const styles = StyleSheet.create({
   headerStats: {
     flexDirection: 'row',
     gap: spacing.xl,
+  },
+  headerStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   statItem: {
     alignItems: 'center',
@@ -410,5 +430,10 @@ const styles = StyleSheet.create({
   },
   emptyButtonContent: {
     paddingHorizontal: spacing.lg,
+  },
+  workoutIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.xs,
   },
 });

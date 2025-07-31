@@ -400,6 +400,21 @@ class DatabaseServiceImp {
     );
   }
 
+  async clearAllData() {
+    if (this.isWeb) {
+      localStorage.setItem('workouts', JSON.stringify([]));
+      return;
+    }
+    try {
+      await this.db.runAsync('DELETE FROM workout_exercises');
+      await this.db.runAsync('DELETE FROM workouts');
+      // Optionally clear personal_records, etc.
+    } catch (error) {
+      console.error('Error clearing all data:', error);
+      throw error;
+    }
+  }
+
   // Debug method to check database contents
   async debugDatabaseContents() {
     if (this.isWeb) {

@@ -12,6 +12,7 @@ import { LineChart, BarChart, PieChart } from 'react-native-chart-kit';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DatabaseService } from '../database/DatabaseService';
 import { spacing, typography } from '../constants/theme';
+import eventBus from '../utils/EventBus';
 
 const { width } = Dimensions.get('window');
 const chartWidth = width - spacing.lg * 2;
@@ -34,6 +35,8 @@ export default function ProgressScreen({ navigation }) {
 
   useEffect(() => {
     loadProgressData();
+    const unsub = eventBus.on('workout:added', loadProgressData);
+    return () => unsub();
   }, [selectedPeriod]);
 
   const loadProgressData = async () => {
